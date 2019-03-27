@@ -1,2 +1,2 @@
-# C-projects
+# C++projects
 My C++ prohects
