@@ -1,6 +1,6 @@
 #pragma once
 #include "time.h"
-#include "Eigen\Dense"
+#include <Eigen/Dense>
 #include <vector>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
@@ -20,6 +20,7 @@
 #include <pcl/kdtree/kdtree_flann.h> //kd_tree
 #include <algorithm>	//FIND
 #include<read_files.h>
+#include <pcl/features/normal_3d.h>	//normals
 
 typedef pcl::PointXYZ PointT;
 typedef pcl::PointCloud<PointT> PointCloud;
@@ -35,6 +36,11 @@ typedef struct {
 // icp iteration; return rotation and translation matrix
 Eigen::Matrix4d ICP_iterate_p2p(PointCloud::Ptr source_cloud, PointCloud::Ptr target_corres);
 
+/*
+Using Point to plane method to calculate the translation matrix
+*/
+Eigen::Matrix4d ICP_iterate_P2L(PointCloud::Ptr source_cloud, PointCloud::Ptr target_corres, pcl::PointCloud<pcl::Normal>::Ptr Normals);
+
 //preprocessing;  find correspondance; remove the outliers.
 //use kd_tree find the neaest neighbor
 //input: source points cloud and target points cloud
@@ -48,3 +54,23 @@ input: depth_file name and depth_file indice;
 output: points cloud after reading from depth file and pre_processing.
 */
 void get_cloud(std::vector<std::string> & depth_name, int picture_ind, PointCloud::Ptr PointCloud);
+
+/*
+Get_Cloud_Normal
+*/
+void Get_Cloud_Normal(PointCloud::Ptr cloud_src, pcl::PointCloud<pcl::Normal>::Ptr Normals);
+
+/*
+P2P Absolute error between icp cloud and target cloud
+*/
+double Get_P2P_Absolute_error(PointCloud::Ptr cloud_icp, PointCloud::Ptr cloud_target);
+
+/*
+P2P Relative error between icp cloud and target cloud
+*/
+double Get_P2P_Relative_error(PointCloud::Ptr cloud_src, PointCloud::Ptr cloud_icp);
+
+/*
+P2L Relative error between icp cloud and target cloud
+*/
+double Get_P2L_Absolute_error(PointCloud::Ptr cloud_src, PointCloud::Ptr cloud_icp, pcl::PointCloud<pcl::Normal>::Ptr Normals);

@@ -1,63 +1,65 @@
 #include <read_files.h>
+#include <ICP_function.h>
 
-void read_picture_txt(std::string & file_name, std::vector<std::string> & picture_name)
+void read_picture_txt(std::string & file_name, std::vector<std::string> & picture_name, std::vector<double> & picture_time_stamp)
 {
 	std::string file_path = "C:\\Users/10216/Desktop/Graduate_first_year/SLAM_HW/HW1/rgbd_dataset_freiburg2_xyz/";
-	std::string rgb_read = file_path + file_name;
+	std::string file_read = file_path + file_name;
 	std::string get_filename;
-	std::ifstream fp_rgb;	// file stream
-	fp_rgb.open(rgb_read);
-	std::string rgb_line_info;	//line information of rgb file
-	float time_stamp;	//time stamp
+	std::ifstream fp_file;	// file stream
+	fp_file.open(file_read);
+	std::string file_line_info;	//line information of rgb file
+	double time_stamp;	//time stamp
 						//std::string png_name[3700];	//png file name array
 	//int png_count = 0;	//png count
-	if (!fp_rgb.is_open())
+	if (!fp_file.is_open())
 	{
-		std::cerr << "File " << rgb_read << " could not be opened for reading\n";
-		fp_rgb.clear();
+		std::cerr << "File " << file_read << " could not be opened for reading\n";
+		fp_file.clear();
 	}
-	while (std::getline(fp_rgb, rgb_line_info))
+	while (std::getline(fp_file, file_line_info))
 	{
-		//std::cout << rgb_line_info << std::endl;
-		if (rgb_line_info[0] != '#')
+		//std::cout << file_line_info << std::endl;
+		if (file_line_info[0] != '#')
 		{
-			std::istringstream string_divide(rgb_line_info);
+			std::istringstream string_divide(file_line_info);
 			string_divide >> time_stamp;
 			string_divide >> get_filename;
 			//picture_name[png_count] = file_path + picture_name[png_count];
 			picture_name.push_back(file_path+ get_filename);
+			picture_time_stamp.push_back(time_stamp);
 			//std::cout << png_name[png_count].c_str() << std::endl;
 		}
 		//if (png_count == 100)
 		//{
-		//	fp_rgb.close();
+		//	fp_file.close();
 		//	break;
 		//}
 	}
-	fp_rgb.close();
+	fp_file.close();
 }
 
 /*void read_picture_txt(std::string & file_name, std::string picture_name[])
 {
 	std::string file_path = "C:\\Users/10216/Desktop/Graduate_first_year/SLAM_HW/HW1/rgbd_dataset_freiburg2_xyz/";
-	std::string rgb_read = file_path + file_name;
-	std::ifstream fp_rgb;	// file stream
-	fp_rgb.open(rgb_read);
-	std::string rgb_line_info;	//line information of rgb file
+	std::string file_read = file_path + file_name;
+	std::ifstream fp_file;	// file stream
+	fp_file.open(file_read);
+	std::string file_line_info;	//line information of rgb file
 	float time_stamp;	//time stamp
 	//std::string png_name[3700];	//png file name array
 	int png_count = 0;	//png count
-	if (!fp_rgb.is_open())
+	if (!fp_file.is_open())
 	{
-		std::cerr << "File " << rgb_read << " could not be opened for reading\n";
-		fp_rgb.clear();
+		std::cerr << "File " << file_read << " could not be opened for reading\n";
+		fp_file.clear();
 	}
-	while (std::getline(fp_rgb, rgb_line_info))
+	while (std::getline(fp_file, file_line_info))
 	{
-		//std::cout << rgb_line_info << std::endl;
-		if (rgb_line_info[0] != '#')
+		//std::cout << file_line_info << std::endl;
+		if (file_line_info[0] != '#')
 		{
-			std::istringstream string_divide(rgb_line_info);
+			std::istringstream string_divide(file_line_info);
 			string_divide >> time_stamp;
 			string_divide >> picture_name[png_count];
 			picture_name[png_count] = file_path + picture_name[png_count];
@@ -66,11 +68,11 @@ void read_picture_txt(std::string & file_name, std::vector<std::string> & pictur
 		}
 		//if (png_count == 100)
 		//{
-		//	fp_rgb.close();
+		//	fp_file.close();
 		//	break;
 		//}
 	}
-	fp_rgb.close();
+	fp_file.close();
 }*/
 
 void read_depth_file(std::string & file_name, Eigen::ArrayXXf & depthArray)
@@ -144,4 +146,87 @@ void read_depth_file(std::string & file_name, Eigen::ArrayXXf & depthArray)
 	free((void*)depthImg);
 	for (int y = 0; y < height; y++)
 		free((void*)row_pointers[y]);
+}
+
+/*
+Find the groundtruth and transform it to RT
+*/
+void GetGroundTruth(std::string & truth_file_name, std::vector<double> & picture_time_stamp, std::vector<Eigen::Matrix4d> & ground_truth_RT)
+{
+	std::string file_path = "C:\\Users/10216/Desktop/Graduate_first_year/SLAM_HW/HW1/rgbd_dataset_freiburg2_xyz/";
+	std::string file_read = file_path + truth_file_name;
+	double tx, ty, tz, qx, qy, qz, qw;
+	std::ifstream fp_file;	// file stream
+	fp_file.open(file_read);
+	std::string file_line_info;	//line information of rgb file
+	int file_count = 0;
+	double time_stamp;	//time stamp
+						//std::string png_name[3700];	//png file name array
+						//int png_count = 0;	//png count
+	if (!fp_file.is_open())
+	{
+		std::cerr << "File " << file_read << " could not be opened for reading\n";
+		fp_file.clear();
+	}
+	while (std::getline(fp_file, file_line_info))
+	{
+		//std::cout << file_line_info << std::endl;
+		if (file_line_info[0] != '#')
+		{
+			std::istringstream string_divide(file_line_info);
+			string_divide >> time_stamp;
+			string_divide >> tx;
+			string_divide >> ty;
+			string_divide >> tz;
+			string_divide >> qx;
+			string_divide >> qy;
+			string_divide >> qz;
+			string_divide >> qw;
+
+			// transform quaternion to rotation matrix
+			//Eigen中四元数赋值的顺序，实数w在首；但是实际上它的内部存储顺序是[x y z w]
+			Eigen::Quaterniond xyzw(qw, qx ,qy ,qz);
+			//xyzw.w = qw;
+			//xyzw.x = qx;
+			//xyzw.y = qy;
+			//xyzw.z = qz;
+			xyzw.normalized();	//important
+			Eigen::Matrix3d Rotation_store = xyzw.toRotationMatrix();
+
+			Eigen::Matrix<double, 4, 4, Eigen::RowMajor> ground_truth_RT_store;
+			ground_truth_RT_store << Rotation_store(0, 0), Rotation_store(0, 1), Rotation_store(0, 2), tx,
+				Rotation_store(1, 0), Rotation_store(1, 1), Rotation_store(1, 2), ty,
+				Rotation_store(2, 0), Rotation_store(2, 1), Rotation_store(2, 2), tz,
+				0, 0, 0, 1;
+
+			ground_truth_RT.push_back(ground_truth_RT_store);
+			picture_time_stamp.push_back(time_stamp);
+
+			//file_count++;
+			//if (file_count % 1000 == 0)
+			//{
+			//	std::cout << "Rotation_store " << Rotation_store << std::endl;
+			//	std::cout << "xyzw.coeffs() " << xyzw.coeffs() << std::endl;
+			//	std::cout << "xyzw= " << qx << " " << qy << " " << qz << " " << qw << std::endl;
+			//	std::cout << "ground_truth_RT_store= " << ground_truth_RT_store << std::endl;
+			//}
+		}
+	}
+	fp_file.close();
+}
+
+/*
+return groundtruth of specify timestamp
+input: timestamp, goundtruth timestamp[vector], groundtruth homogenous matrix[vector]
+output:specify homegenous matrix
+*/
+Eigen::Matrix4d Get_time_stamp_Matrix(double time_stamp, std::vector<double> & picture_time_stamp, std::vector<Eigen::Matrix4d> & ground_truth_RT)
+{
+	for (int i = 0; i < picture_time_stamp.size(); i++)
+	{
+		if (picture_time_stamp[i] >= time_stamp)
+		{
+			return ground_truth_RT[i];
+		}
+	}
 }

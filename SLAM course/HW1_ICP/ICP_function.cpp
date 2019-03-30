@@ -204,3 +204,179 @@ void Correspondance_search(PointCloud::Ptr cloud_src, PointCloud::Ptr cloud_dst,
 	std::cout << "Correspondance_search time " << time_duration << std::endl;
 	// remove these points related to one point
 }
+
+/*
+Get cloud surface normals
+*/
+void Get_Cloud_Normal(PointCloud::Ptr cloud_src, pcl::PointCloud<pcl::Normal>::Ptr Normals)
+{
+	//normal test
+	clock_t time_start, time_finish;
+	double  time_duration;
+	time_start = clock();
+	// clear the points in normals
+	Normals->clear();
+	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
+	//建立kdtree来进行近邻点集搜索
+	pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+	//为kdtree添加点运数据
+	//tree->setInputCloud(cloud_src);
+	n.setInputCloud(cloud_src);
+	n.setSearchMethod(tree);
+	//点云法向计算时，需要所搜的近邻点大小
+	n.setKSearch(10);
+	//开始进行法向计算
+	n.compute(*Normals);
+	time_finish = clock();
+	time_duration = (double)(time_finish - time_start) / CLOCKS_PER_SEC;
+	std::cout << "normals time " << time_duration << std::endl;
+}
+
+/*
+P2P Absolute error between icp cloud and target cloud
+*/
+double Get_P2P_Absolute_error(PointCloud::Ptr cloud_icp, PointCloud::Ptr cloud_target)
+{
+	double E_icp_absolute = 0.0;
+	//double E_icp1 = 0.0;
+	for (int i = 0; i < cloud_icp->size(); i++)
+	{
+		//absolute error
+		E_icp_absolute += ((cloud_target->points[i].x - cloud_icp->points[i].x)*(cloud_target->points[i].x - cloud_icp->points[i].x)
+			+ (cloud_target->points[i].y - cloud_icp->points[i].y)*(cloud_target->points[i].y - cloud_icp->points[i].y)
+			+ (cloud_target->points[i].z - cloud_icp->points[i].z)*(cloud_target->points[i].z - cloud_icp->points[i].z));
+	}
+	E_icp_absolute = E_icp_absolute / cloud_icp->size();
+	return E_icp_absolute;
+}
+
+/*
+P2P Relative error between icp cloud and target cloud
+*/
+double Get_P2P_Relative_error(PointCloud::Ptr cloud_src, PointCloud::Ptr cloud_icp)
+{
+	double E_icp_realative = 0.0;
+	for (int i = 0; i < cloud_icp->size(); i++)
+	{
+		//E_icp1 += ((Points_rmcen1[i].x)*(Points_rmcen1[i].x) + (Points_rmcen1[i].y)*(Points_rmcen1[i].y) + (Points_rmcen1[i].z)*(Points_rmcen1[i].z));
+		E_icp_realative += ((cloud_src->points[i].x - cloud_icp->points[i].x)*(cloud_src->points[i].x - cloud_icp->points[i].x)
+			+ (cloud_src->points[i].y - cloud_icp->points[i].y)*(cloud_src->points[i].y - cloud_icp->points[i].y)
+			+ (cloud_src->points[i].z - cloud_icp->points[i].z)*(cloud_src->points[i].z - cloud_icp->points[i].z));
+	}
+	E_icp_realative = E_icp_realative / cloud_icp->size();
+	return E_icp_realative;
+}
+
+/*
+P2L Relative error between icp cloud and target cloud
+*/
+double Get_P2L_Absolute_error(PointCloud::Ptr cloud_icp, PointCloud::Ptr cloud_target, pcl::PointCloud<pcl::Normal>::Ptr Normals)
+{
+	double E_P2L_absolute = 0.0;
+	//double E_icp1 = 0.0;
+	for (int i = 0; i < cloud_icp->size(); i++)
+	{
+		//absolute error
+		E_P2L_absolute += ((cloud_target->points[i].x - cloud_icp->points[i].x)*Normals->points[i].normal_x
+			+ (cloud_target->points[i].y - cloud_icp->points[i].y)*Normals->points[i].normal_y
+			+ (cloud_target->points[i].z - cloud_icp->points[i].z)*Normals->points[i].normal_z)
+			*((cloud_target->points[i].x - cloud_icp->points[i].x)*Normals->points[i].normal_x
+				+ (cloud_target->points[i].y - cloud_icp->points[i].y)*Normals->points[i].normal_y
+				+ (cloud_target->points[i].z - cloud_icp->points[i].z)*Normals->points[i].normal_z);
+	}
+	E_P2L_absolute = E_P2L_absolute / cloud_icp->size();
+	return E_P2L_absolute;
+}
+
+Eigen::Matrix4d ICP_iterate_P2L(PointCloud::Ptr source_cloud, PointCloud::Ptr target_corres, pcl::PointCloud<pcl::Normal>::Ptr Normals)
+{
+
+	int pts_num = source_cloud->size();
+	Eigen::MatrixXd A(pts_num, 6);
+	Eigen::MatrixXd b(pts_num, 1);
+	Eigen::MatrixXd x_opt;
+
+	//build A and b
+	for (int i = 0; i<pts_num; i++) 
+	{
+		A(i,0) = Normals->points[i].normal_z*source_cloud->points[i].y - Normals->points[i].normal_y*source_cloud->points[i].z;
+		A(i,1) = Normals->points[i].normal_x*source_cloud->points[i].z - Normals->points[i].normal_z*source_cloud->points[i].x;
+		A(i,2) = Normals->points[i].normal_y*source_cloud->points[i].x - Normals->points[i].normal_x*source_cloud->points[i].y;
+		A(i,3) = Normals->points[i].normal_x;
+		A(i,4) = Normals->points[i].normal_y;
+		A(i,5) = Normals->points[i].normal_z;
+
+
+		b(i) = ((target_corres->points[i].x - source_cloud->points[i].x)*Normals->points[i].normal_x
+			+ (target_corres->points[i].y - source_cloud->points[i].y)*Normals->points[i].normal_y
+			+ (target_corres->points[i].z - source_cloud->points[i].z)*Normals->points[i].normal_z);
+	}
+	//std::cout << "A " << A << "  b  " << b << std::endl;
+	//Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeFullU | Eigen::ComputeFullV);//M=USV*
+	//Eigen::MatrixXd U = svd.matrixU();
+	//Eigen::MatrixXd V = svd.matrixV();
+	//Eigen::MatrixXd Vt = svd.matrixV().transpose();
+	//Eigen::MatrixXd sigma = svd.singularValues();
+	//Eigen::MatrixXd sigma_plus;
+	//for (int i = 0; i < 3; i++)
+	//{
+	//	sigma_plus(i,i) = (sigma(i,i) = 0) ? 0 : (1 / sigma(i,i));
+	//}
+	//Eigen::MatrixXd A_plus(6, pts_num);
+	//A_plus = V * sigma_plus*(U.transpose());
+	////x_opt=(alpha,beta,gama,t_x,t_y,t_z)
+	//x_opt = A_plus * b;
+
+
+	//Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeFullU | Eigen::ComputeFullV);//M=USV*
+	//double  pinvtoler = 1.e-8; //tolerance
+	//int row = A.rows();
+	//int col = A.cols();
+	//int k = 6;
+	//Eigen::MatrixXd A_plus = Eigen::MatrixXd::Zero(col, row);
+	//Eigen::MatrixXd singularValues_inv = svd.singularValues();//奇异值
+	//Eigen::MatrixXd singularValues_inv_mat = Eigen::MatrixXd::Zero(col, row);
+	//for (long i = 0; i<k; ++i) {
+	//	if (singularValues_inv(i) > pinvtoler)
+	//		singularValues_inv(i) = 1.0 / singularValues_inv(i);
+	//	else singularValues_inv(i) = 0;
+	//}
+	//for (long i = 0; i < k; ++i)
+	//{
+	//	singularValues_inv_mat(i, i) = singularValues_inv(i);
+	//}
+	//A_plus = (svd.matrixV())*(singularValues_inv_mat)*(svd.matrixU().transpose());//X=VS+U*
+	//x_opt = A_plus * b;
+
+	// solve x
+	x_opt = ((A.transpose()*A).inverse())*(A.transpose())*b;
+
+	//get the R and T;
+	Eigen::Matrix3d R;
+	double sin_a = sin(x_opt(0));
+	double cos_a = cos(x_opt(0));
+	double sin_b = sin(x_opt(1));
+	double cos_b = cos(x_opt(1));
+	double sin_y = sin(x_opt(2));
+	double cos_y = cos(x_opt(2));
+	R(0, 0) = cos_y * cos_b;
+	R(0, 1) = -sin_y * cos_a + cos_y * sin_b*sin_a;
+	R(0, 2) = sin_y * sin_a + cos_y * sin_b*cos_a;
+	R(1, 0) = sin_y * cos_b;
+	R(1, 1) = cos_y * cos_a + sin_y * sin_b*sin_a;
+	R(1, 2) = -cos_y * sin_a + sin_y * sin_b*cos_a;
+	R(2, 0) = -sin_b;
+	R(2, 1) = cos_b * sin_a;
+	R(2, 2) = cos_b * cos_a;
+
+	Eigen::Matrix<double, 4, 4, Eigen::RowMajor> ICP_transformation;
+	//Eigen::Matrix4d ICP_transformation = Eigen::Matrix4d::Identity();
+	//ICP_transformation = Eigen::Matrix4d::Identity();
+	// column master!!!!
+	ICP_transformation << R(0, 0), R(0, 1), R(0, 2), x_opt(3),
+		R(1, 0), R(1, 1), R(1, 2), x_opt(4),
+		R(2, 0), R(2, 1), R(2, 2), x_opt(5),
+		0, 0, 0, 1;
+	return ICP_transformation;
+
+}

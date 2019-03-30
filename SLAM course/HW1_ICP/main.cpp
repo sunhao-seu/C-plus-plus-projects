@@ -1,9 +1,4 @@
-//#include<opencv2\opencv.hpp>
-//#include<iostream>
-//#include<fstream>
-//#include<string>
-//#include<sstream>
-//#include <Eigen/Eigen>
+#pragma warning(disable: 4996)
 #include<read_files.h>
 #include "Eigen\Dense"
 #include <vector>
@@ -26,7 +21,8 @@
 #include <ICP_function.h>
 #include <cstdio>	//remove file
 
-//#define MY_VTK_VIEW_ON
+//#define MY_VTK_VIEW_ON		//Control the points cloud view
+//#define ICP_P2L					// Control the P2P algorithm or P2L algorithm;
 
 #ifdef MY_VTK_VIEW_ON
 #include <pcl/io/vtk_io.h>
@@ -38,120 +34,144 @@
 int main(int argc, char** argv)
 {
 	std::string depth_file = "depth.txt";
+	std::string truth_file_name = "groundtruth.txt";
 	std::vector<std::string> depth_name;	//depth file name array
-	read_picture_txt(depth_file, depth_name);	//get depth files path and name
+	std::vector<double> file_time_stamp;	//depth file name array
+	std::vector<double> groundtruth_time_stamp;	//depth file name array
+	read_picture_txt(depth_file, depth_name, file_time_stamp);	//get depth files path and name
+	std::vector<Eigen::Matrix4d> ground_truth_RT;
+	GetGroundTruth(truth_file_name, groundtruth_time_stamp, ground_truth_RT);	//get groundtruth homogenous matrix
 
 	PointCloud::Ptr SourcePointCloud(new PointCloud);	//SourcePointCloud and TargetPointCloud
 	PointCloud::Ptr TargetPointCloud(new PointCloud);
 	PointCloud::Ptr pointCloud_icp(new PointCloud);
-	PointCloud::Ptr SourcePointCloud_new(new PointCloud);
+	PointCloud::Ptr SourcePointCloud_store(new PointCloud);
 	PointCloud::Ptr SourcePointCloud_corres(new PointCloud);	//nearest search correspondance of cloud1
 	PointCloud::Ptr TargetPointCloud_corres(new PointCloud);	//nearest search correspondance of cloud2
 	PointT p;	//store the global pose for a moment
+
 	Eigen::Matrix4d ICP_transformation;		//transformation matrix
-	Eigen::Matrix4d ICP_transformation_all = Eigen::Matrix4d::Identity();		//transformation matrix
+	Eigen::Matrix4d ICP_transformation_all;		//transformation matrix
+	Eigen::Matrix4d Ground_truth_transformation;		//transformation matrix
+
 	std::vector<Eigen::Matrix4d> ICP_transformation_store;		//store transformation matrix between pictures
+	std::vector<Eigen::Matrix4f> ICP_Library_store;		//store transformation matrix between pictures
+	std::vector<Eigen::Matrix4d> Ground_truth_transformation_store;		//store transformation matrix between pictures
 	std::vector<double> E_store;
+	// Output Normals of points surface
+	pcl::PointCloud<pcl::Normal>::Ptr Normals(new pcl::PointCloud<pcl::Normal>);
 
 	bool process = 1; // while condition
 	int picture_ind = 0;	//read depth picture indice
-	get_cloud(depth_name, picture_ind, SourcePointCloud_new);
+	Ground_truth_transformation = Get_time_stamp_Matrix(file_time_stamp[picture_ind], groundtruth_time_stamp, ground_truth_RT);
+	Ground_truth_transformation_store.push_back(Ground_truth_transformation);
 	while (process)
 	{
 		// update source points cloud
-		*SourcePointCloud = *SourcePointCloud_new;
+		ICP_transformation_all = Eigen::Matrix4d::Identity();
 		TargetPointCloud->clear();
-		
+		SourcePointCloud->clear();
+		get_cloud(depth_name, picture_ind, SourcePointCloud);
+
+		*SourcePointCloud_store = *SourcePointCloud;
+
 		picture_ind = picture_ind + 20;
 		if (picture_ind >= depth_name.size())
 		{break;}
 
+		Ground_truth_transformation = Get_time_stamp_Matrix(file_time_stamp[picture_ind], groundtruth_time_stamp, ground_truth_RT);
+		Ground_truth_transformation_store.push_back(Ground_truth_transformation);
+
 		std::cout << "compare with picture " << (picture_ind-20) << " and " << picture_ind << std::endl;
+		std::cout << "*************************" << std::endl;
+		std::cout << "*************************" << std::endl;
 		// read new point cloud
 		get_cloud(depth_name, picture_ind, TargetPointCloud);
 
 		bool ICP_continue = 1;
-		double E_icp_threshold = 0.00001;
+		double E_icp_threshold = 0.0001;
 		int iteration_count = 1;
 		double pre_error = 0.0;
 		while (ICP_continue)
 		{
-
-
 			//ICP algorithm by my code;
-			//preprocessing;  find correspondance; remove the outliers.
-			Correspondance_search(SourcePointCloud, TargetPointCloud, SourcePointCloud_corres, TargetPointCloud_corres);
-
-			// icp iteration
-			ICP_transformation = ICP_iterate_p2p(SourcePointCloud_corres, TargetPointCloud_corres);
-
-			//std::cout << "ICP_transformation= " << ICP_transformation << std::endl;
-			ICP_transformation_all *= ICP_transformation;
-			std::cout << "ICP_transformation_all= " << ICP_transformation_all << std::endl;
+						//preprocessing;  find correspondance; remove the outliers.
+						Correspondance_search(SourcePointCloud, TargetPointCloud, SourcePointCloud_corres, TargetPointCloud_corres);
 			
-			// transformation of original cloud to icp cloud; PCL library
-			pcl::transformPointCloud(*SourcePointCloud_corres, *pointCloud_icp, ICP_transformation);
+			#ifdef ICP_P2L
+						//ICP P2L iteration
+						// calculate normals
+						Normals->clear();
+						Get_Cloud_Normal(TargetPointCloud_corres, Normals);
+						ICP_transformation = ICP_iterate_P2L(SourcePointCloud_corres, TargetPointCloud_corres, Normals);
+			#else
+						// icp  P2P iteration
+						ICP_transformation = ICP_iterate_p2p(SourcePointCloud_corres, TargetPointCloud_corres);
+			
+			#endif
+						//std::cout << "ICP_transformation= " << ICP_transformation << std::endl;
+						ICP_transformation_all *= ICP_transformation;
+						std::cout << "ICP_transformation_all= " << ICP_transformation_all << std::endl;
+						
+						// transformation of original cloud to icp cloud; PCL library
+						pcl::transformPointCloud(*SourcePointCloud_corres, *pointCloud_icp, ICP_transformation);
+			
+						double E_P2P_realative = 0.0;
+						E_P2P_realative = Get_P2P_Relative_error(SourcePointCloud_corres, pointCloud_icp);
+						std::cout << "E_P2P_realative= " << E_P2P_realative << std::endl;
+			
+			#ifdef ICP_P2L			
+						double E_P2L_absolute = 0.0;
+						E_P2L_absolute = Get_P2L_Absolute_error(pointCloud_icp, TargetPointCloud_corres, Normals);
+						std::cout << "E_P2L_absolute= " << E_P2L_absolute << std::endl;
+						
+			#else	
+						// calculate relative error or absolute error
+						double E_P2P_absolute = 0.0;
+						E_P2P_absolute = Get_P2P_Absolute_error(pointCloud_icp, TargetPointCloud_corres);
+						std::cout << "E_icp_absolute= " << E_P2P_absolute << std::endl;
+			#endif
+			
+						if (E_P2P_realative > E_icp_threshold)
+						{
+							ICP_continue = 1;
+							//*SourcePointCloud = *pointCloud_icp;
+							pcl::transformPointCloud(*SourcePointCloud, *SourcePointCloud, ICP_transformation);
+							iteration_count++;
+							pre_error = E_P2P_realative;
+						}
+						else 
+						{ 
+							ICP_continue = 0; 
+							//store the transformation matrix
+							ICP_transformation_store.push_back(ICP_transformation_all);
+							//store the error of last result
+							E_store.push_back(E_P2P_realative);
+			#ifdef ICP_P2L	
+							E_store.push_back(E_P2L_absolute);
+			#else
+							E_store.push_back(E_P2P_absolute);
+			#endif
+						}
+			
+						//important 
+						SourcePointCloud_corres->clear();
+						TargetPointCloud_corres->clear();
+			
+					}
 
-			// calculate relative error or absolute error
-			double E_icp_absolute = 0.0;
-			double E_icp_realative = 0.0;
-			//double E_icp1 = 0.0;
-			for (int i = 0; i < pointCloud_icp->size(); i++)
-			{
-				//E_icp1 += ((Points_rmcen1[i].x)*(Points_rmcen1[i].x) + (Points_rmcen1[i].y)*(Points_rmcen1[i].y) + (Points_rmcen1[i].z)*(Points_rmcen1[i].z));
-				E_icp_realative += ((SourcePointCloud_corres->points[i].x - pointCloud_icp->points[i].x)*(SourcePointCloud_corres->points[i].x - pointCloud_icp->points[i].x)
-					+ (SourcePointCloud_corres->points[i].y - pointCloud_icp->points[i].y)*(SourcePointCloud_corres->points[i].y - pointCloud_icp->points[i].y)
-					+ (SourcePointCloud_corres->points[i].z - pointCloud_icp->points[i].z)*(SourcePointCloud_corres->points[i].z - pointCloud_icp->points[i].z));
-			}
-			//int N_SMALL = (N1 >= N2) ? N2 : N1;
-			for (int i = 0; i < pointCloud_icp->size(); i++)
-			{
-				//absolute error
-				E_icp_absolute += ((TargetPointCloud_corres->points[i].x - pointCloud_icp->points[i].x)*(TargetPointCloud_corres->points[i].x - pointCloud_icp->points[i].x)
-					+ (TargetPointCloud_corres->points[i].y - pointCloud_icp->points[i].y)*(TargetPointCloud_corres->points[i].y - pointCloud_icp->points[i].y)
-					+ (TargetPointCloud_corres->points[i].z - pointCloud_icp->points[i].z)*(TargetPointCloud_corres->points[i].z - pointCloud_icp->points[i].z));
-			}
-			//E_icp1 = E_icp1 - 2 * (sigma[0] + sigma[1] + sigma[2]);
-			E_icp_realative = E_icp_realative/ pointCloud_icp->size();
-			std::cout << "E_icp= " << E_icp_realative << std::endl;
-			std::cout << "E_icp_absolute= " << E_icp_absolute << std::endl;
 
-			if (E_icp_realative > E_icp_threshold)
-			{
-				ICP_continue = 1;
-				//*SourcePointCloud = *pointCloud_icp;
-				pcl::transformPointCloud(*SourcePointCloud, *SourcePointCloud, ICP_transformation);
-				iteration_count++;
-				pre_error = E_icp_realative;
-			}
-			else 
-			{ 
-				ICP_continue = 0; 
-				//store the transformation matrix
-				ICP_transformation_store.push_back(ICP_transformation_all);
-				//store the error of last result
-				E_store.push_back(E_icp_realative);
-				E_store.push_back(E_icp_absolute);
-				pcl::transformPointCloud(*SourcePointCloud, *SourcePointCloud_new, ICP_transformation);
-			}
-
-			//important 
-			SourcePointCloud_corres->clear();
-			TargetPointCloud_corres->clear();
-
-		}
-
-		
-		//************ICP algorithm by PCL library...*****************
-		//pcl::IterativeClosestPoint<PointT, PointT> icp;
-		////icp.setInputCloud(SourcePointCloud);
-		//icp.setInputSource(SourcePointCloud);
-		//icp.setInputTarget(TargetPointCloud);
-		//pcl::PointCloud<PointT> Final;
-		//icp.align(Final);
-		//std::cout << "has converged:" << icp.hasConverged() << " score: " <<
-		//	icp.getFitnessScore() << std::endl;
-		//std::cout << icp.getFinalTransformation() << std::endl;
+					// ************ICP algorithm by PCL library...*****************
+			//pcl::IterativeClosestPoint<PointT, PointT> icp;
+			////icp.setInputCloud(SourcePointCloud);
+			//icp.setInputSource(SourcePointCloud);
+			//icp.setInputTarget(TargetPointCloud);
+			//pcl::PointCloud<PointT> Final;
+			//icp.align(Final);
+			//std::cout << "has converged:" << icp.hasConverged() << " score: " <<
+			//	icp.getFitnessScore() << std::endl;
+			//std::cout << icp.getFinalTransformation() << std::endl;
+			//ICP_Library_store.push_back(icp.getFinalTransformation());
 
 		/*//*******transformation of original cloud to next cloud; for test*******************
 		Eigen::Matrix4f icp_transformation = Eigen::Matrix4f::Identity();
@@ -174,13 +194,15 @@ int main(int argc, char** argv)
 		ss << picture_ind-20;
 		std::string iterations_cnt = "original cloud iteration = " + ss.str();
 		viewer.addPointCloud(SourcePointCloud_store, iterations_cnt);
-		pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> colorHandler1(TargetPointCloud, 0, 255, 0);
+
+		pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> colorHandler1(TargetPointCloud, 255, 0, 0);
 		std::stringstream ss2;
 		ss2 << picture_ind;
 		std::string iterations_cnt2 = "next cloud iteration = " + ss.str();
 		viewer.addPointCloud(TargetPointCloud, colorHandler1, iterations_cnt2);
+
 		// The icp result points will be red in color.
-		pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> colorHandler(pointCloud_icp, 255, 0, 0);
+		pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> colorHandler(pointCloud_icp, 0, 255, 0);
 		std::stringstream ss3;
 		ss3 << picture_ind;
 		std::string iterations_cnt3 = "icp calculated original to next = " + ss.str();
@@ -205,14 +227,30 @@ int main(int argc, char** argv)
 	std::cout << "press any key to exit! " << std::endl;
 
 	// write the ICP_T matrix to a .txt file
-	remove("ICP_transformation_store.txt");
+#ifdef ICP_P2L
+	remove("ICP_P2L_transformation_store.txt");
 	std::ofstream fout;
-	fout.open("ICP_transformation_store.txt", std::ios::app);//在文件末尾追加写入
+	fout.open("ICP_P2L_transformation_store.txt", std::ios::app);//在文件末尾追加写入
+#else
+	remove("ICP_P2P_transformation_store.txt");
+	std::ofstream fout;
+	fout.open("ICP_P2P_transformation_store.txt", std::ios::app);//在文件末尾追加写入
+#endif
 	for (int i = 0; i < ICP_transformation_store.size(); i++)
 	{
 		fout << ICP_transformation_store[i] << std::endl;//每次写完一个矩阵以后换行
 	}
 	fout.close();
+
+//store the groundtruth RT matrix
+	remove("Ground_truth_transformation_store.txt");
+	std::ofstream fout2;
+	fout2.open("Ground_truth_transformation_store.txt", std::ios::app);//在文件末尾追加写入
+	for (int i = 0; i < Ground_truth_transformation_store.size(); i++)
+	{
+		fout2 << Ground_truth_transformation_store[i] << std::endl;//每次写完一个矩阵以后换行
+	}
+	fout2.close();
 
 	//read from txt file
 	//std::vector<Matrix4f> T0;//创建储存多个矩阵的vector对象
