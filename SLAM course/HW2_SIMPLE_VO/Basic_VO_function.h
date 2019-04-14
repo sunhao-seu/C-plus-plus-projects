@@ -32,11 +32,34 @@ void GetFundamentalLameda(const std::vector<cv::Point> good_match_img1, const st
 
 
 /*
-GetReprojectionError()
+CalculateInlierNumbers()
 Input: two imag matched points, Fundamental Matrix
 Output: number of inlier points, 
 */
-void CalculateInlierNumbers(const std::vector<cv::Point> good_match_img1, const std::vector<cv::Point> good_match_img2, const std::vector< cv::Point3d >& points, const cv::Mat& R, const cv::Mat& t, int &inliers_count, double &TotalError);
+void CalculateInlierNumbers(const std::vector<cv::Point> good_match_img1, const std::vector<cv::Point> good_match_img2, const std::vector< cv::Point3d > points, const cv::Mat& R, const cv::Mat& t, int &inliers_count, double &TotalError);
+
+
+/*
+GetInliers()
+Input:two image feature points, fundamental_most;
+Output:two inliers points
+*/
+void GetInliers(const std::vector<cv::Point> good_match_img1, const std::vector<cv::Point> good_match_img2, const cv::Mat Fundmental_most, std::vector<cv::Point> & inliers_img1, std::vector<cv::Point> & inliers_img2);
+
+
+/*
+Draw feature points
+DrawFeaturePoints()
+Inpput:source image, feature points;
+*/
+void DrawFeaturePoints(const cv::Mat source_img, const std::vector<cv::Point> Feature_Points);
+
+/*
+Draw moving line
+DrawMovingLines()
+Inpput:source image, feature points1, feature points2;
+*/
+void DrawMovingLines(const cv::Mat source_img, const std::vector<cv::Point> Feature_Points1, const std::vector<cv::Point> Feature_Points2);
 
 
 /*
@@ -66,3 +89,45 @@ void triangulation(
 Get distance of two points in one image.
 */
 double getDistance(cv::Point2f pointO, cv::Point2f pointA);
+
+
+/*
+Normalized the points<vector>
+Input:  std::vector<cv::Point> Feature_Points
+Output: Normalized points, transform matrix T
+*/
+void NormanizePoints(const std::vector<cv::Point> Source_Points, std::vector<cv::Point2f> & Normalized_Points, cv::Mat & T);
+
+
+/*
+EIght points calculate the FUndaental matrix
+Get_Eight_Points_Fundamental();
+Input:Normalized_inliers_img1,Normalized_inliers_img2,T1,T2
+Output:Fundamental matrix
+*/
+cv::Mat Get_Eight_Points_Fundamental(const std::vector<cv::Point2f> Normalized_Points1, const std::vector<cv::Point2f> Normalized_Points2, const cv::Mat T1, const cv::Mat T2);
+
+
+/*
+GetEssentialInliers
+*/
+void GetEssentialInliers(const std::vector<cv::Point> good_match_img1, const std::vector<cv::Point> good_match_img2, const cv::Mat Essential_Matrix, std::vector<cv::Point> & inliers_img1, std::vector<cv::Point> & inliers_img2);
+
+
+/*
+DrawEpipolarLine();
+Input: F, inlier points, image
+Output: No
+*/
+void DrawEpipolarLine(const cv::Mat source_img, const std::vector<cv::Point> Inlier_Points, const cv::Mat Fundamental_Matrix);
+
+void DrawEpiLines(const cv::Mat& img_1, const cv::Mat& img_2, std::vector<cv::Point>points1, std::vector<cv::Point>points2, const cv::Mat Fundamental_Matrix);
+
+/*
+
+*/
+void ScaleTriangulation(
+	const std::vector<cv::Point> keypoint_1,
+	const std::vector<cv::Point> keypoint_2,
+	const cv::Mat& R, const cv::Mat& t,
+	std::vector< cv::Point3d >& points, const cv::Mat & T_Pose_Pre);
