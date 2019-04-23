@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <LibraryPath>/usr/local/lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>../slam_hw3_BA_linux/include;/usr/include;/usr/include/suitesparse;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <LibraryDependencies>g2o_cli;opencv_dpm;g2o_core;opencv_face;g2o_csparse_extension;opencv_features2d;g2o_ext_freeglut_minimal;opencv_flann;g2o_hierarchical;opencv_freetype;g2o_incremental;opencv_fuzzy;g2o_interactive;opencv_hfs;g2o_interface;opencv_highgui;g2o_opengl_helper;opencv_imgcodecs;g2o_parser;opencv_img_hash;g2o_simulator;opencv_imgproc;g2o_solver_cholmod;opencv_line_descriptor;g2o_solver_csparse;opencv_ml;g2o_solver_dense;opencv_objdetect;g2o_solver_eigen;opencv_optflow;g2o_solver_pcg;opencv_phase_unwrapping;g2o_solver_slam2d_linear;opencv_photo;g2o_solver_structure_only;opencv_plot;g2o_stuff;opencv_reg;g2o_types_data;opencv_rgbd;g2o_types_icp;opencv_saliency;g2o_types_sba;opencv_shape;g2o_types_sclam2d;opencv_stereo;g2o_types_sim3;opencv_stitching;g2o_types_slam2d_addons;opencv_structured_light;g2o_types_slam2d;opencv_superres;g2o_types_slam3d_addons;opencv_surface_matching;g2o_types_slam3d;opencv_text;g2o_viewer;opencv_tracking;opencv_aruco;opencv_videoio;opencv_bgsegm;opencv_video;opencv_bioinspired;opencv_videostab;opencv_calib3d;opencv_xfeatures2d;opencv_ccalib;opencv_ximgproc;opencv_core;opencv_xobjdetect;opencv_datasets;opencv_xphoto;opencv_dnn_objdetect;tbb;opencv_dnn;png;%(LibraryDependencies)</LibraryDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>
