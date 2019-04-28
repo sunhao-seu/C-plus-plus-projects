@@ -25,6 +25,14 @@
 #include <g2o/core/optimization_algorithm_dogleg.h>
 #include <g2o/solvers/eigen/linear_solver_eigen.h>
 
+#include <g2o/core/sparse_optimizer.h>
+#include <g2o/core/block_solver.h>
+#include <g2o/core/robust_kernel.h>
+#include <g2o/core/robust_kernel_impl.h>
+#include <g2o/core/optimization_algorithm_levenberg.h>
+#include <g2o/solvers/cholmod/linear_solver_cholmod.h>
+#include <g2o/types/slam3d/se3quat.h>
+
 
 int main()
 {
@@ -73,7 +81,7 @@ int main()
 		cv::Mat img_d1 = cv::imread(depth_name[depth_corres_indice], CV_LOAD_IMAGE_UNCHANGED);       // 深度图为16位无符号数，单通道图像
 		picture_ind += 20;
 		std::cout << "*****************************************************Compare image " << picture_ind - 20 << " with image " << picture_ind << std::endl;
-		if (picture_ind > 1000 || depth_corres_indice == -1)//rgb_name.size()
+		if (picture_ind > LastIndice || depth_corres_indice == -1)//rgb_name.size()
 		{
 			break;
 		}
@@ -165,18 +173,23 @@ int main()
 				ObservPoints point_store;
 				cv::Point3f World_point;
 				point_store.CameraId.push_back((picture_ind - 20) / 20);	//上一帧ID
+				point_store.CameraId_UV_Point.push_back(cv::Point2f(Ransaced_keypoints_1[Ransaced_Matches[i].queryIdx].pt.x,
+					Ransaced_keypoints_1[Ransaced_Matches[i].queryIdx].pt.y) );	//存入该特征点在上一帧中的UV像素坐标
 				point_store.CameraId.push_back((picture_ind) / 20);		//当前帧ID
+				point_store.CameraId_UV_Point.push_back(cv::Point2f(Ransaced_keypoints_2[Ransaced_Matches[i].queryIdx].pt.x,
+					Ransaced_keypoints_2[Ransaced_Matches[i].queryIdx].pt.y)); //存入该特征点在这一帧中的UV像素坐标
 
 				Local3D_to_World3D(pts_3d[i], Camera_Last_pose, World_point);
 				point_store.WorldPoint = World_point;
-				point_store.OB_KeyPoint1 = Ransaced_keypoints_1[Ransaced_Matches[i].queryIdx];	//	应该存入第一幅图的关键点，以便与后面的匹配
-				point_store.OB_KeyPoint2 = Ransaced_keypoints_2[Ransaced_Matches[i].trainIdx];	//	应该存入第二幅图的关键点，以便与后面的匹配
+				//point_store.OB_KeyPoint1 = Ransaced_keypoints_1[Ransaced_Matches[i].queryIdx];	//	应该存入第一幅图的关键点，以便与后面的匹配
+				point_store.OB_KeyPoint = Ransaced_keypoints_2[Ransaced_Matches[i].trainIdx];	//	存入第二幅图的关键点
+				point_store.Is_in_Chain = true;
 				PointChain.push_back(point_store);
 			}
 		}
 		else
 		{
-			//需要判断之前的特征点是否存储过，旧的更新CameraID信息，新的直接push
+			//需要判断之前的特征点是否存储过，旧的更新CameraID信息，新的直接push; 旧的应该还需要更新keypoint信息
 			//对于新来的每一个点，判断已存在在Chain里面
 			for (int i = 0; i < pts_3d.size(); i++)
 			{
@@ -184,29 +197,41 @@ int main()
 				int KPexisted_indice;
 				for (int j = 0; j < PointChain.size(); j++)
 				{
-					if (PointChain[j].OB_KeyPoint2.pt == Ransaced_keypoints_1[Ransaced_Matches[i].queryIdx].pt)
+					if ( (PointChain[j].Is_in_Chain == true) && (PointChain[j].OB_KeyPoint.pt == Ransaced_keypoints_1[Ransaced_Matches[i].queryIdx].pt) )
 					{
 						KPexisted = 1;
 						KPexisted_indice = j;
 						break;
 					}
+					PointChain[j].Is_in_Chain = false;
 				}
 
 				if (KPexisted)
 				{
-					PointChain[KPexisted_indice].CameraId.push_back((picture_ind) / 20); //只存入当前ID
+					//如果已经存在，存入当前cameraID,更新keypoint,设Is_in_chain 为true.
+					PointChain[KPexisted_indice].CameraId.push_back((picture_ind) / 20); //存入当前ID
+					PointChain[KPexisted_indice].CameraId_UV_Point.push_back(cv::Point2f(
+						Ransaced_keypoints_2[Ransaced_Matches[i].queryIdx].pt.x,
+						Ransaced_keypoints_2[Ransaced_Matches[i].queryIdx].pt.y)); //存入该特征点在这一帧中的UV像素坐标
+					PointChain[KPexisted_indice].OB_KeyPoint = Ransaced_keypoints_2[Ransaced_Matches[i].trainIdx];	//更新特征点
+					PointChain[KPexisted_indice].Is_in_Chain = true;	//设Is_in_chain 为true.
 				}
 				else
 				{
 					ObservPoints point_store;
 					cv::Point3f World_point;
 					point_store.CameraId.push_back((picture_ind - 20) / 20);	//上一帧ID
+					point_store.CameraId_UV_Point.push_back(cv::Point2f(Ransaced_keypoints_1[Ransaced_Matches[i].queryIdx].pt.x,
+						Ransaced_keypoints_1[Ransaced_Matches[i].queryIdx].pt.y));	//存入该特征点在上一帧中的UV像素坐标
 					point_store.CameraId.push_back((picture_ind) / 20);		//当前帧ID
+					point_store.CameraId_UV_Point.push_back(cv::Point2f(Ransaced_keypoints_2[Ransaced_Matches[i].queryIdx].pt.x,
+						Ransaced_keypoints_2[Ransaced_Matches[i].queryIdx].pt.y)); //存入该特征点在这一帧中的UV像素坐标
 
 					Local3D_to_World3D(pts_3d[i], Camera_Last_pose, World_point);
 					point_store.WorldPoint = World_point;
-					point_store.OB_KeyPoint1 = Ransaced_keypoints_1[Ransaced_Matches[i].queryIdx];
-					point_store.OB_KeyPoint2 = Ransaced_keypoints_2[Ransaced_Matches[i].trainIdx];	//	应该存入第二幅图的关键点，以便与后面的匹配
+					//point_store.OB_KeyPoint1 = Ransaced_keypoints_1[Ransaced_Matches[i].queryIdx];	//	应该存入第一幅图的关键点，以便与后面的匹配
+					point_store.OB_KeyPoint = Ransaced_keypoints_2[Ransaced_Matches[i].trainIdx];	//	存入第二幅图的关键点
+					point_store.Is_in_Chain = true;
 					PointChain.push_back(point_store);
 				}
 			}
@@ -230,7 +255,8 @@ int main()
 			Ground_truth_store[(picture_ind / 20) - 1](2, 0), Ground_truth_store[(picture_ind / 20) - 1](2, 1), Ground_truth_store[(picture_ind / 20) - 1](2, 2), Ground_truth_store[(picture_ind / 20) - 1](2, 3),
 			Ground_truth_store[(picture_ind / 20) - 1](3, 0), Ground_truth_store[(picture_ind / 20) - 1](3, 1), Ground_truth_store[(picture_ind / 20) - 1](3, 2), Ground_truth_store[(picture_ind / 20) - 1](3, 3)
 			);
-		Camera_Last_pose = Last_Ground_Truth * (Transform_Relative.inv());		//Tw2 = Tw1 * (T21.inv())
+		//Camera_Last_pose = Last_Ground_Truth * (Transform_Relative.inv());		//Tw2 = Tw1 * (T21.inv())
+		Camera_Last_pose = Camera_Last_pose * (Transform_Relative.inv());		//Tw2 = Tw1 * (T21.inv())
 		Camera_Trajactory.push_back(Camera_Last_pose);	//这种是把存放数据的地址放进去了。。我曹**********************
 
 
@@ -245,9 +271,9 @@ int main()
 	std::cout << "press any key to exit! " << std::endl;
 
 	//store the groundtruth RT matrix
-	remove("Ground_truth_store.txt");
+	remove("Ground_truth.txt");
 	std::ofstream fout1;
-	fout1.open("Ground_truth_store.txt", std::ios::app);//在文件末尾追加写入
+	fout1.open("Ground_truth.txt", std::ios::app);//在文件末尾追加写入
 	for (int i = 0; i < Ground_truth_store.size(); i++)
 	{
 		fout1 << Ground_truth_store[i] << std::endl;//每次写完一个矩阵以后换行
@@ -295,7 +321,8 @@ int main()
 			Camera_Trajactory_Transform[i].at<double>(1, 0), Camera_Trajactory_Transform[i].at<double>(1, 1), Camera_Trajactory_Transform[i].at<double>(1, 2), ((Camera_Trajactory_Transform[i].at<double>(1, 3))),
 			Camera_Trajactory_Transform[i].at<double>(2, 0), Camera_Trajactory_Transform[i].at<double>(2, 1), Camera_Trajactory_Transform[i].at<double>(2, 2), ((Camera_Trajactory_Transform[i].at<double>(2, 3))),
 			0, 0, 0, 1;
-		ICP_pose =  Ground_truth_store[i] * (TransformMatrix.inverse());
+		//ICP_pose =  Ground_truth_store[i] * (TransformMatrix.inverse());	//相对轨迹
+		ICP_pose = ICP_pose * (TransformMatrix.inverse());	//绝对轨迹
 		Camera_Trajactory2.push_back(ICP_pose);
 	}
 	fout3.close();
@@ -305,27 +332,40 @@ int main()
 	Camera_Trajactory.clear();
 	for (int i = 0; i < Camera_Trajactory2.size(); i++)
 	{
-		Camera_Trajactory.push_back( ( cv::Mat_<double>(4, 4) << 
+		cv::Mat Camera_traactory_store = (cv::Mat_<double>(4, 4) <<
 			Camera_Trajactory2[i](0, 0), Camera_Trajactory2[i](0, 1), Camera_Trajactory2[i](0, 2), Camera_Trajactory2[i](0, 3),
 			Camera_Trajactory2[i](1, 0), Camera_Trajactory2[i](1, 1), Camera_Trajactory2[i](1, 2), Camera_Trajactory2[i](1, 3),
 			Camera_Trajactory2[i](2, 0), Camera_Trajactory2[i](2, 1), Camera_Trajactory2[i](2, 2), Camera_Trajactory2[i](2, 3),
-			Camera_Trajactory2[i](3, 0), Camera_Trajactory2[i](3, 1), Camera_Trajactory2[i](3, 2), Camera_Trajactory2[i](3, 3) )
-		);
+			Camera_Trajactory2[i](3, 0), Camera_Trajactory2[i](3, 1), Camera_Trajactory2[i](3, 2), Camera_Trajactory2[i](3, 3));
+#ifdef Using_Camera_RT
+		Camera_Trajactory.push_back(Camera_traactory_store.inv());	//绝对位姿Twc取逆得到相机的外参Tcw。。
+#else
+		Camera_Trajactory.push_back(Camera_traactory_store);
+#endif
 	}
 
 	remove("MATLAB_MY_TRUTH.txt");
 	std::ofstream fout4;
 	fout4.open("MATLAB_MY_TRUTH.txt", std::ios::app);//在文件末尾追加写入
-	for (int i = 0; i < Camera_Trajactory.size(); i++)
+	for (int i = 0; i < Camera_Trajactory2.size(); i++)
 	{
-		Eigen::Matrix4d Matlab_pose;
-		Matlab_pose << Camera_Trajactory[i].at<double>(0, 0), Camera_Trajactory[i].at<double>(0, 1), Camera_Trajactory[i].at<double>(0, 2), Camera_Trajactory[i].at<double>(0, 3),
-			Camera_Trajactory[i].at<double>(1, 0), Camera_Trajactory[i].at<double>(1, 1), Camera_Trajactory[i].at<double>(1, 2), Camera_Trajactory[i].at<double>(1, 3),
-			Camera_Trajactory[i].at<double>(2, 0), Camera_Trajactory[i].at<double>(2, 1), Camera_Trajactory[i].at<double>(2, 2), Camera_Trajactory[i].at<double>(2, 3),
-			Camera_Trajactory[i].at<double>(3, 0), Camera_Trajactory[i].at<double>(3, 1), Camera_Trajactory[i].at<double>(3, 2), Camera_Trajactory[i].at<double>(3, 3);
-		fout4 << std::fixed << std::setprecision(4) << Matlab_pose << std::endl; //每次写完一个矩阵以后换行
+		fout4 << std::fixed << std::setprecision(4) << Camera_Trajactory2[i] << std::endl; //每次写完一个矩阵以后换行
 	}
 	fout4.close();
+
+	//remove("MATLAB_MY_TRUTH.txt");
+	//std::ofstream fout4;
+	//fout4.open("MATLAB_MY_TRUTH.txt", std::ios::app);//在文件末尾追加写入
+	//for (int i = 0; i < Camera_Trajactory.size(); i++)
+	//{
+	//	Eigen::Matrix4d Matlab_pose;
+	//	Matlab_pose << Camera_Trajactory[i].at<double>(0, 0), Camera_Trajactory[i].at<double>(0, 1), Camera_Trajactory[i].at<double>(0, 2), Camera_Trajactory[i].at<double>(0, 3),
+	//		Camera_Trajactory[i].at<double>(1, 0), Camera_Trajactory[i].at<double>(1, 1), Camera_Trajactory[i].at<double>(1, 2), Camera_Trajactory[i].at<double>(1, 3),
+	//		Camera_Trajactory[i].at<double>(2, 0), Camera_Trajactory[i].at<double>(2, 1), Camera_Trajactory[i].at<double>(2, 2), Camera_Trajactory[i].at<double>(2, 3),
+	//		Camera_Trajactory[i].at<double>(3, 0), Camera_Trajactory[i].at<double>(3, 1), Camera_Trajactory[i].at<double>(3, 2), Camera_Trajactory[i].at<double>(3, 3);
+	//	fout4 << std::fixed << std::setprecision(4) << Matlab_pose << std::endl; //每次写完一个矩阵以后换行
+	//}
+	//fout4.close();
 
 	time_finish = clock();
 	time_duration = (double)(time_finish - time_start) / CLOCKS_PER_SEC;
@@ -341,6 +381,12 @@ int main()
 	g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(std::unique_ptr<Block>(solver_ptr));	//levenberg algorithm非线性优化算法
 	g2o::SparseOptimizer optimizer;		//稀疏性矩阵优化器
 	optimizer.setAlgorithm(solver);
+
+	/* setToOriginImpl设定被优化变量的原始值，
+	oplusImpl比较重要，我们根据增量方程计算出增量之后，
+	就是通过这个函数对估计值进行调整的，
+	因此这个函数的内容一定要写对，
+	否则会造成一直优化却得不到好的优化结果的现象。*/
 
 	// vertex
 	//camera Camera_Pose
@@ -368,7 +414,7 @@ int main()
 		g2o::VertexSBAPointXYZ* point = new g2o::VertexSBAPointXYZ();
 		point->setId(i + Camera_Trajactory.size());
 		point->setEstimate(Eigen::Vector3d(PointChain[i].WorldPoint.x, PointChain[i].WorldPoint.y, PointChain[i].WorldPoint.z));
-		point->setMarginalized(true); // g2o 中必须设置 marg 参见第十讲内容
+		point->setMarginalized(true); // g2o 中必须设置 marg 参见第十讲内容g2o 中必须设置边缘化。设定为true时，将会被边缘化加速求解。见式(10.56)至式(10.59)。
 		optimizer.addVertex(point);
 	}
 
@@ -380,6 +426,7 @@ int main()
 	optimizer.addParameter(camera);
 
 	// edges
+	std::vector<g2o::EdgeProjectXYZ2UV*> edges;
 	//int edge_index = 0;
 	for (int i = 0; i < PointChain.size(); i++)
 	{
@@ -389,36 +436,39 @@ int main()
 			const int edge_point_id = i + Camera_Trajactory.size(); // get id for the point 
 
 			cv::Point2f Pixel_point;
-			World3D_to_CameraUV(PointChain[i].WorldPoint, Camera_Trajactory[edge_camera_id], Pixel_point);
+			//World3D_to_CameraUV(PointChain[i].WorldPoint, Camera_Trajactory[edge_camera_id], Pixel_point);
+			Pixel_point = PointChain[i].CameraId_UV_Point[j];
 
 			g2o::EdgeProjectXYZ2UV* edge = new g2o::EdgeProjectXYZ2UV();
 
 #ifdef BA_Robustify
-			g2o::RobustKernelHuber* rk = new RobustKernelHuber;
+			g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
 			rk->setDelta(1.0);
 			edge->setRobustKernel(rk);
+
 #endif
 			//edge->setId(edge_point_id);
 			//其实是在设置一条边的两个节点，0,1应该是固定的，因为一条边只有两个节点
 			//index为3D特征点的节点ID，得到的就是这个3D点的信息
 			edge->setVertex(0, dynamic_cast<g2o::VertexSBAPointXYZ*>(optimizer.vertex(edge_point_id)));
 			edge->setVertex(1, dynamic_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(edge_camera_id)));//看到这个点的相机的ID的信息
+			//应该有两条边，对应两个观测信息
 			edge->setMeasurement(Eigen::Vector2d(Pixel_point.x, Pixel_point.y));
 			edge->setParameterId(0, 0);	//不知道作用
 			Eigen::Matrix<double, 2, 2> information;
 			information = Eigen::MatrixXd::Identity(2,2);
 			edge->setInformation(information);
-			g2o::Vector2 b;
 			optimizer.addEdge(edge);
+			edges.push_back(edge);
 		}
 	}
 	optimizer.save("before_g2o.g2o");
 	
 
 	std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-	optimizer.setVerbose(true);
+	optimizer.setVerbose(true); // 打开调试输出
 	optimizer.initializeOptimization();
-	optimizer.optimize(200);
+	optimizer.optimize(50);
 	std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
 	std::chrono::duration<double> time_used = std::chrono::duration_cast<std::chrono::duration<double>> (t2 - t1);
 	std::cout << "optimization costs time: " << time_used.count() << " seconds." << std::endl;
@@ -433,6 +483,25 @@ int main()
 	//	Eigen::Isometry3d pose = v->estimate();
 	//	std::cout << "Optimized Pose " << i << std::endl << pose.matrix() << std::endl;
 	//}
+
+	//// 估计inlier的个数
+	//int inliers = 0;
+	//for (auto e : edges)
+	//{
+	//	e->computeError();
+	//	// chi2 就是 error*\Omega*error, 如果这个数很大，说明此边的值与其他边很不相符
+	//	if (e->chi2() > 1)
+	//	{
+	//		std::cout << "error = " << e->chi2() << std::endl;
+	//	}
+	//	else
+	//	{
+	//		inliers++;
+	//	}
+	//}
+
+	//std::cout << "inliers in total points: " << inliers << "/" << PointChain.size() << std::endl;
+
 	
 	//存储BA后两帧之间的转换矩阵
 	remove("MY_BA_TRUTH.txt");
@@ -445,6 +514,49 @@ int main()
 		fout5 << std::fixed << std::setprecision(4) << pose.matrix() << std::endl; //每次写完一个矩阵以后换行
 	}
 	fout5.close();
+
+	//存储BA后相机绝对位姿，与groundtruth对应
+	std::vector<Eigen::Matrix4d> BA_Trajactory;
+	remove("MY_BA_Trajactory_TRUTH.txt");
+	std::ofstream fout6;
+	fout6.open("MY_BA_Trajactory_TRUTH.txt", std::ios::app);//在文件末尾追加写入
+	for (int i = 0; i < Camera_Trajactory.size(); i++)
+	{
+		g2o::VertexSE3Expmap* v = dynamic_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(i));
+		Eigen::Isometry3d pose = v->estimate();
+		//std::cout << "Camera pose BA " << ((pose.matrix()).inverse()) << std::endl;
+
+#ifdef Using_Camera_RT
+		fout6 << std::fixed << std::setprecision(4) << (( pose.matrix()).inverse() ) << std::endl; //每次写完一个矩阵以后换行
+		BA_Trajactory.push_back(((pose.matrix()).inverse()));
+#else
+		fout6 << std::fixed << std::setprecision(4) << (( pose.matrix()).inverse() ) << std::endl; //每次写完一个矩阵以后换行
+		BA_Trajactory.push_back(((pose.matrix()).inverse()));
+#endif
+	}
+	fout6.close();
+
+	//trransform RT to quartanier,
+	remove("Web_compare_MY_BA_TRUTH.txt");
+	std::ofstream fout7;
+	fout7.open("Web_compare_MY_BA_TRUTH.txt", std::ios::app);//在文件末尾追加写入
+	Eigen::Matrix<double, 1, 8> my_BA_truth_vector;
+	Eigen::Matrix3d BA_Rotation_matrix;
+	for (int i = 0; i < BA_Trajactory.size(); i++)
+	{
+		BA_Rotation_matrix = BA_Trajactory[i].block<3, 3>(0, 0);
+		Eigen::Quaterniond q = Eigen::Quaterniond(BA_Rotation_matrix);
+		my_BA_truth_vector[0] = double(rgb_file_time_stamp[20 * i]);
+		my_BA_truth_vector[1] = (BA_Trajactory[i](0, 3));	//tx
+		my_BA_truth_vector[2] = (BA_Trajactory[i](1, 3));	//ty
+		my_BA_truth_vector[3] = (BA_Trajactory[i](2, 3));	//tz
+		my_BA_truth_vector[4] = (q.x());	//qx
+		my_BA_truth_vector[5] = (q.y());	//tx
+		my_BA_truth_vector[6] = (q.z());	//ty
+		my_BA_truth_vector[7] = (q.w());	//tz
+		fout7 << std::fixed << std::setprecision(4) << my_BA_truth_vector << std::endl;
+	}
+	fout7.close();
 
 	// 以及所有特征点的位置
 	//for (size_t i = 0; i<PointChain.size(); i++)

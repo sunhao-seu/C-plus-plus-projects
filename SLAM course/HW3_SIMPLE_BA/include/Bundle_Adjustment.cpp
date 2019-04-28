@@ -575,7 +575,8 @@ void Local3D_to_World3D(const cv::Point3f & Local_point, const cv::Mat Camera_po
 		Camera_pose.at<double>(1, 0), Camera_pose.at<double>(1, 1), Camera_pose.at<double>(1, 2),
 		Camera_pose.at<double>(2, 0), Camera_pose.at<double>(2, 1), Camera_pose.at<double>(2, 2) );
 	cv::Mat t = ( cv::Mat_<double>(3, 1) << Camera_pose.at<double>(0, 3), Camera_pose.at<double>(1, 3), Camera_pose.at<double>(2, 3) );
-	cv::Mat Wpoint = R.t() * (Lpoint - t);		//Pc= R*Pw +t
+	//cv::Mat Wpoint = R.t() * (Lpoint - t);		//Pc= R*Pw +t
+	cv::Mat Wpoint = R * Lpoint + t;		//Pc= R*Pw +t  Tc = Twc  Pw=Twc*Pc  Pw = Tc * Pc
 	World_point.x = Wpoint.at<double>(0, 0);
 	World_point.y = Wpoint.at<double>(1, 0);
 	World_point.z = Wpoint.at<double>(2, 0);
@@ -584,11 +585,19 @@ void Local3D_to_World3D(const cv::Point3f & Local_point, const cv::Mat Camera_po
 void World3D_to_CameraUV(const cv::Point3f & World_point, const cv::Mat Camera_pose, cv::Point2f & Local_point)
 {
 	cv::Mat Wpoint = (cv::Mat_<double>(3, 1) << World_point.x, World_point.y, World_point.z);
-	cv::Mat R = (cv::Mat_<double>(3, 3) << Camera_pose.at<double>(0, 0), Camera_pose.at<double>(0, 1), Camera_pose.at<double>(0, 2),
-		Camera_pose.at<double>(1, 0), Camera_pose.at<double>(1, 1), Camera_pose.at<double>(1, 2),
-		Camera_pose.at<double>(2, 0), Camera_pose.at<double>(2, 1), Camera_pose.at<double>(2, 2));
-	cv::Mat t = (cv::Mat_<double>(3, 1) << Camera_pose.at<double>(0, 3), Camera_pose.at<double>(1, 3), Camera_pose.at<double>(2, 3));
-	cv::Mat Lpoint = R * Wpoint + t;		//世界坐标系的点回到相机坐标系
+	cv::Mat Camera_pose_inv = Camera_pose.inv();//*********************
+	cv::Mat R = (cv::Mat_<double>(3, 3) << Camera_pose_inv.at<double>(0, 0), Camera_pose_inv.at<double>(0, 1), Camera_pose_inv.at<double>(0, 2),
+		Camera_pose_inv.at<double>(1, 0), Camera_pose_inv.at<double>(1, 1), Camera_pose_inv.at<double>(1, 2),
+		Camera_pose_inv.at<double>(2, 0), Camera_pose_inv.at<double>(2, 1), Camera_pose_inv.at<double>(2, 2));
+	cv::Mat t = (cv::Mat_<double>(3, 1) << Camera_pose_inv.at<double>(0, 3), Camera_pose_inv.at<double>(1, 3), Camera_pose_inv.at<double>(2, 3));
+	//std::cout << "Camera_pose " << Camera_pose << std::endl;
+	//std::cout << "Camera_pose_inv " << Camera_pose_inv << std::endl;
+	//std::cout << "R " << R << std::endl;
+	//std::cout << "t " << t << std::endl;
+	cv::Mat Lpoint = R * Wpoint + t;		//R，T求逆了， 世界坐标系的点回到相机坐标系
+	//cv::Mat Lpoint = R.t() * ( Wpoint - t );		//世界坐标系的点回到相机坐标系
 	Lpoint = Lpoint / Lpoint.at<double>(2, 0);	//归一化
+	std::cout << "Lpoint " << Lpoint << std::endl;
 	Local_point = cam2pixel(cv::Point2f(Lpoint.at<double>(0, 0), Lpoint.at<double>(1, 0)));
+	std::cout << "Local_point " << Local_point << std::endl;
 }

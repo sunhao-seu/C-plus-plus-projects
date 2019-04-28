@@ -16,7 +16,8 @@
 
 //#define SHOW_INFORMATION
 //#define SHOW_IMAGE
-//#define BA_Robustify
+#define BA_Robustify
+#define Using_Camera_RT
 
 //Eigen::Isometry3d T = Eigen::cvMat2Eigen(result.rvec, result.tvec);
 //cout << "T=" << T.matrix() << endl;
@@ -29,13 +30,15 @@ const int TotalError_default = 1000000;
 
 #define FirstIndice 0
 #define inlier_threshold 0.8
+#define LastIndice 3000
 
 struct ObservPoints
 {
 	cv::Point3f WorldPoint;
 	std::vector<int> CameraId;
-	cv::KeyPoint OB_KeyPoint1;
-	cv::KeyPoint OB_KeyPoint2;
+	std::vector<cv::Point2f> CameraId_UV_Point;
+	cv::KeyPoint OB_KeyPoint;
+	bool Is_in_Chain;
 };
 
 
@@ -152,6 +155,7 @@ Transform local 3D points to World 3D points
 */
 void Local3D_to_World3D(const cv::Point3f & Local_point, const cv::Mat Camera_pose, cv::Point3f & World_point);
 
+//如果使用相机外参，应该是直接乘就可以
 void World3D_to_CameraUV(const cv::Point3f & World_point, const cv::Mat Camera_pose, cv::Point2f & Local_point);
 
 cv::Point2f cam2pixel(const cv::Point2f& p);
