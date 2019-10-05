@@ -4,6 +4,8 @@
 //template<int DATA_SIZE>
 void MyPointCloudToArray(pcl::PointCloud<pcl::PointXYZI>::Ptr point_cloud_data_set, struct ThreeDimPoint data_set[], int & data_set_size)
 {
+	//ampty the array
+	memset(data_set, 0, sizeof(struct ThreeDimPoint) * data_set_size);
 	int count = 0;
 	for (int i = 0; i < point_cloud_data_set->points.size(); i++)
 	{
@@ -201,6 +203,10 @@ void GetMaxMin(struct ThreeDimPoint data_set[], struct MaxMin & data_max_min, co
 
 void SplitSubSpace(const int data_set_size, const struct MaxMin data_max_min, type_point x_split_array[], type_point y_split_array[], type_point z_split_array[], struct SplitArraySize & split_array_size)
 {
+	//memset(x_split_array, 0, sizeof(type_point) * split_array_size.x_array_size);
+	//memset(y_split_array, 0, sizeof(type_point) * split_array_size.y_array_size);
+	//memset(z_split_array, 0, sizeof(type_point) * split_array_size.z_array_size);
+
 	int calculated_space_size = (data_set_size / k_sub_space_data_size + 1);		//evaluate the sub-spaces in need
 	float x_range = data_max_min.xmax - data_max_min.xmin;							//the range of the data on x axis
 	float y_range = data_max_min.ymax - data_max_min.ymin;
@@ -259,15 +265,89 @@ void SplitSubSpace(const int data_set_size, const struct MaxMin data_max_min, ty
 
 }
 
+void SplitSubSpacePrecise(const int data_set_size, const struct MaxMin data_max_min, type_point x_split_array[], type_point y_split_array[], type_point z_split_array[], struct SplitArraySize & split_array_size)
+{
+	int x_split_size = (data_max_min.xmax - data_max_min.xmin) / k_split_precise;
+	int y_split_size = (data_max_min.ymax - data_max_min.ymin) / k_split_precise;
+	int z_split_size = (data_max_min.zmax - data_max_min.zmin) / k_split_precise;
+	int total_sub_spaces = (x_split_size * y_split_size * z_split_size);
+
+	//ensure the number of sub-spaces won't exceed the k_sub_region_max
+	if (total_sub_spaces > k_sub_region_max)
+	{
+		int split_down_size = pow((k_sub_region_max / total_sub_spaces),1.0/3) +1;
+		x_split_size = x_split_size / split_down_size;
+		y_split_size = y_split_size / split_down_size;
+		z_split_size = z_split_size / split_down_size;
+	}
+
+	//when know the split unit and range, we can calculate the each split point and store it in a array.
+	for (int i = 0; i <= x_split_size; i++)
+	{
+		x_split_array[i] = data_max_min.xmin + i * k_split_precise;
+	}
+	for (int i = 0; i <= y_split_size; i++)
+	{
+		y_split_array[i] = data_max_min.ymin + i * k_split_precise;
+	}
+	for (int i = 0; i <= z_split_size; i++)
+	{
+		z_split_array[i] = data_max_min.zmin + i * k_split_precise;
+	}
+
+	//the split array range [min,max];(contain the min and max)
+	split_array_size.x_array_size = x_split_size + 1;
+	split_array_size.y_array_size = y_split_size + 1;
+	split_array_size.z_array_size = z_split_size + 1;
+}
 
 //template<int DATA_SIZE, int SUBSETS_NUM, int SUBSPACE_NUM>
 void DataClassify(struct ThreeDimPoint data_set[], int data_set_size, type_point x_split_array[], type_point y_split_array[], type_point z_split_array[], struct SplitArraySize split_array_size, int sub_sets[][k_sub_space_array_size], int sub_sets_size[])
 {
+	memset(sub_sets, 0, sizeof(int) * k_sub_space_array_size * k_sub_region_max);
+	memset(sub_sets_size, 0, sizeof(int) * k_sub_region_max);
+	srand((unsigned)time(NULL));
+
 	for (int i = 0; i < data_set_size; i++)
 	{
 		int data_index = PCLCalculateIndex(data_set[i], x_split_array, y_split_array, z_split_array, split_array_size);
-		sub_sets[data_index][sub_sets_size[data_index]] = i;
+		int index_size = sub_sets_size[data_index] + 1;		//此数据存放的下标
+
 		sub_sets_size[data_index] = sub_sets_size[data_index] + 1;
+
+		//以下操作确保数据不会超过给定空间的范围，同时还保证了一定的均匀采点
+		if (index_size < 1.0/3*k_sub_space_array_size)		//存储数据在0到1/3*k_sub_space_array_size之间
+			sub_sets[data_index][sub_sets_size[data_index]] = i;
+		else if (index_size < 2.0 / 3 * k_sub_space_array_size)	//存储数据在1/3*k_sub_space_array_size到2/3*k_sub_space_array_size之间
+		{
+			//三分之一的概率存起来
+			int rand_number = rand() % 10;
+			if (rand_number < 3)
+				sub_sets[data_index][sub_sets_size[data_index]] = i;
+			else
+				sub_sets_size[data_index] = sub_sets_size[data_index] - 1;
+		}
+			
+		else if (index_size < 4.0 / 5 * k_sub_space_array_size)	//存储数据在2/3*k_sub_space_array_size到4/5*k_sub_space_array_size之间
+		{
+			//五分之一的概率存起来
+			int rand_number = rand() % 10;
+			if (rand_number < 2)
+				sub_sets[data_index][sub_sets_size[data_index]] = i;
+			else
+				sub_sets_size[data_index] = sub_sets_size[data_index] - 1;
+		}
+		else if(index_size < k_sub_space_array_size)	//存储数据在4/5*k_sub_space_array_size到k_sub_space_array_size之间
+		{
+			//10分之一的概率存起来
+			int rand_number = rand() % 10;
+			if (rand_number < 1)
+				sub_sets[data_index][sub_sets_size[data_index]] = i;
+			else
+				sub_sets_size[data_index] = sub_sets_size[data_index] - 1;
+		}
+		else sub_sets_size[data_index]=sub_sets_size[data_index] - 1;
+
 	}
 }
 
@@ -319,6 +399,10 @@ int PCLCalculateIndex(struct ThreeDimPoint point_data, type_point x_split_array[
 
 void SearchKNearestNeighbors(int K, struct ThreeDimPoint query_data, struct ThreeDimPoint data_set[], int sub_sets[][k_sub_space_array_size], int sub_sets_size[], type_point x_split_array[], type_point y_split_array[], type_point z_split_array[], struct SplitArraySize split_array_size, int nearest_index[], type_point nearest_distance[])
 {
+	memset(nearest_index, 0, sizeof(int) * k_query_set_size);
+	memset(nearest_distance, 0, sizeof(int) * k_query_set_size);
+
+
 	int query_index = PCLCalculateIndex(query_data, x_split_array, y_split_array, z_split_array, split_array_size);
 	int search_distance = 0;								//distance of near_region and current region
 	int near_regions[k_search_near_regions_max];			//store the near_regions finded by Find_Near_Regions() function

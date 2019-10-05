@@ -419,7 +419,7 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 		pcl::PointCloud<PointType> surfPointsLessFlatScanDS;
 		pcl::VoxelGrid<PointType> downSizeFilter;
 		downSizeFilter.setInputCloud(surfPointsLessFlatScan);
-		downSizeFilter.setLeafSize(0.2, 0.2, 0.2);
+		downSizeFilter.setLeafSize(0.2, 0.2, 0.2);	//设置单位正方体为20cm
 		downSizeFilter.filter(surfPointsLessFlatScanDS);
 
 		//less flat点

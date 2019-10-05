@@ -651,11 +651,50 @@ LaserMappingBack LaserMapping::LaserMappingHandler(const LaserOdometryBack& Odom
 				kdtreeCornerFromMap.setInputCloud(laserCloudCornerFromMap);
 				kdtreeSurfFromMap.setInputCloud(laserCloudSurfFromMap);
 
-#ifdef MY_SHOW_TIME_PROFILE				
+#ifdef MY_SHOW_MAP_TIME_PROFILE				
 				time2 = clock();
-				time_last1 = (double)(time2 - time1) / CLOCKS_PER_SEC;
-				std::cout << "Build tree Time = " << time_last1 << std::endl;
+				time_last1 = (double)(time2 - time1);
+				std::cout << "Mapping Build tree Time = " << time_last1 << std::endl;
 #endif
+
+
+/*********************************************************************************/
+			//build the grid-based data structure of corner_last
+			//struct ThreeDimPoint map_corner_data_set[k_data_set_size];
+			//int map_corner_useful_data_set_size = 0;
+			//transform pointcloud to array
+
+			MyPointCloudToArray(laserCloudCornerFromMap, map_corner_data_set, map_corner_useful_data_set_size);
+
+			time1 = clock();
+			GetMaxMin(map_corner_data_set, map_corner_data_max_min, map_corner_useful_data_set_size);
+
+			//SplitSubSpace(map_corner_useful_data_set_size, map_corner_data_max_min, map_corner_x_split_array, map_corner_y_split_array, map_corner_z_split_array, map_corner_split_array_size);
+			SplitSubSpacePrecise(map_corner_useful_data_set_size, map_corner_data_max_min, map_corner_x_split_array, map_corner_y_split_array, map_corner_z_split_array, map_corner_split_array_size);
+
+
+			DataClassify(map_corner_data_set, map_corner_useful_data_set_size, map_corner_x_split_array, map_corner_y_split_array, map_corner_z_split_array, map_corner_split_array_size, map_corner_sub_sets, map_corner_sub_sets_size);
+#ifdef MY_SHOW_MAP_TIME_PROFILE		
+			time2 = clock();
+			time_last1 = (double)(time2 - time1);
+			std::cout << "Mapping GBDS establish time is : " << time_last1 << std::endl;
+#endif
+			//test the sub-sets
+			int valid_sub_spaces_size = 0;
+			for (int i = 0; i < map_corner_split_array_size.x_array_size * map_corner_split_array_size.y_array_size * map_corner_split_array_size.z_array_size; i++)
+			{
+				if (map_corner_sub_sets_size[i] > 0)
+				{
+					valid_sub_spaces_size++;
+					cout << map_corner_sub_sets_size[i] << "   ";
+				}
+			}
+			cout << endl << "map_corner_useful_data_set_size size: " << map_corner_useful_data_set_size << endl;
+			cout << endl << "totally " << valid_sub_spaces_size << " valid_sub_spaces via  " << map_corner_split_array_size.x_array_size * map_corner_split_array_size.y_array_size * map_corner_split_array_size.z_array_size << " whole spaces" << endl;
+/*********************************************************************************/
+
+
+
 				//重新定义查找点的个数和距离
 				std::vector<int> pointSearchInd;
 				std::vector<float> pointSearchSqDis;
@@ -680,8 +719,51 @@ LaserMappingBack LaserMapping::LaserMappingHandler(const LaserOdometryBack& Odom
 						//laserCloudCornerStack是雷达本地坐标系下，voxel滤波之后的特征点集
 						pointOri = laserCloudCornerStack->points[i];
 						pointAssociateToMap(&pointOri, &pointSel);
+
 						//kd树中查找与指定点最近的5个点，按距离从小到大排序，返回点的索引与距离
+						time2 = clock();
 						kdtreeCornerFromMap.nearestKSearch(pointSel, 5, pointSearchInd, pointSearchSqDis);
+						time3 = clock();
+						time_last3 = (time4 - time3);
+
+/*********************************************************************************/
+
+
+						std::vector<int> record_ind = pointSearchInd;
+						std::vector<float> record_dis = pointSearchSqDis;
+
+						struct ThreeDimPoint my_point_sel;
+						MyPointXYZIToThreeDimPoint(pointSel, my_point_sel);
+
+						time3 = clock();
+
+						type_point map_corner_nearest_distance[k_query_set_size];
+						int map_corner_nearest_index[k_query_set_size];
+						//int map_corner_query_space_index = PCLCalculateIndex(my_point_sel, map_corner_x_split_array, map_corner_y_split_array, map_corner_z_split_array, map_corner_split_array_size);
+						SearchKNearestNeighbors(5, my_point_sel, map_corner_data_set, map_corner_sub_sets, map_corner_sub_sets_size, map_corner_x_split_array, map_corner_y_split_array, map_corner_z_split_array, map_corner_split_array_size, map_corner_nearest_index, map_corner_nearest_distance);
+
+//#ifdef MY_SHOW_MAP_TIME_PROFILE
+//						time4 = clock();
+//						time_last2 = (time4 - time3);
+//						if (time_last2 > 0 || time_last3 > 0)
+//						{
+//							std::cout << "Mapping GBDS search time is : " << time_last2 << std::endl;
+//							std::cout << "Mapping kdtree search time is : " << time_last3 << std::endl;
+//						}
+//#endif
+
+						for (int i = 0; i < 5; i++)
+						{
+							pointSearchInd[i] = map_corner_nearest_index[i];
+							pointSearchSqDis[i] = map_corner_nearest_distance[i];
+						}
+						
+
+						//cout << "the nearest neighbor of " << pointSel.x << "," << pointSel.y << "," << pointSel.z << endl;;
+						//cout << "GBDS is " << map_corner_data_set[map_corner_nearest_index[0]].x << "," << map_corner_data_set[map_corner_nearest_index[0]].y << "," << map_corner_data_set[map_corner_nearest_index[0]].z << " with the distance is " << map_corner_nearest_distance[0] << endl;
+						//cout << "FLANN KD TREE is " << laserCloudCornerLast->points[record_ind].x << "," << laserCloudCornerLast->points[record_ind].y << "," << laserCloudCornerLast->points[record_ind].z << " with the distance is " << record_dis <<endl;
+/*********************************************************************************/
+
 
 						if (pointSearchSqDis[4] < 1.0)//5个点中最大距离不超过1才处理
 						{
@@ -884,7 +966,7 @@ LaserMappingBack LaserMapping::LaserMappingHandler(const LaserOdometryBack& Odom
 						}
 					}
 
-#ifdef MY_SHOW_TIME_PROFILE
+#ifdef MY_SHOW_MAP_TIME_PROFILE
 					time2 = clock();
 					time_last2 = (double)(time2 - time1) / CLOCKS_PER_SEC;
 					std::cout << "Search tree and calculate Time = " << time_last2 << std::endl;
@@ -1156,7 +1238,7 @@ LaserMappingBack LaserMapping::LaserMappingHandler(const LaserOdometryBack& Odom
 		}//第二个总if，跟第一个if条件一样。。。
 	}//总if
 
-#ifdef MY_SHOW_TIME_PROFILE
+#ifdef MY_SHOW_MAP_TIME_PROFILE
 	time4 = clock();
 	time_last3 = (double)(time4 - time3) / CLOCKS_PER_SEC;
 	std::cout << "Total mapping Time = " << time_last3 << std::endl;

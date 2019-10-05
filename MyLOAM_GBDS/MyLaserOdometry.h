@@ -111,5 +111,8 @@ private:
 	type_point surf_last_x_split_array[k_axis_spaces_max], surf_last_y_split_array[k_axis_spaces_max], surf_last_z_split_array[k_axis_spaces_max];
 	int surf_last_sub_sets[k_sub_region_max][k_sub_space_array_size];
 	int surf_last_sub_sets_size[k_sub_region_max] = { 0 };		//important
+
+	clock_t time1, time2, time3, time4;
+	double time_last1, time_last2, time_last3;
 };
 #endif

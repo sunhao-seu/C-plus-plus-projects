@@ -18,7 +18,7 @@ const int k_data_set_size = 1200000;		//size of dataset  64000*20
 //const int k_query_set_size = 5000;		//size of queryset; usually donot need this const value
 const int k_sub_space_data_size = 4;		//the average size of data in a sub-space
 ///TODO: default error: the actual size of this array may larger than this array_size..
-const int k_sub_space_array_size = 100;		//the average size of data in a sub-space
+const int k_sub_space_array_size = 100;		//the max size of data in a sub-space
 const float k_error_tare = 0.05;			//ANN error rate; 
 const int k_axis_spaces_max = 40;	//the biggest sizeber of subspaces
 const int k_sub_region_max = 64000;	//40*40*40
@@ -26,6 +26,7 @@ const int k_search_near_regions_max = 1000;	//
 const int k_nearest_number_max = 10;	//10
 const int k_query_set_size = 10;
 const int k_search_times = 5;
+const int k_split_precise = 2;		//the split precise, unit: m;
 
 //template<typename type_point>
 typedef double type_point;
@@ -83,6 +84,17 @@ void GetMaxMin(struct ThreeDimPoint data_set[], struct MaxMin & data_max_min, co
 */
 //template<int X_SPLIT_SIZE, int Y_SPLIT_SIZE, int Z_SPLIT_SIZE>
 void SplitSubSpace(const int data_set_size, const struct MaxMin data_max_min, type_point x_split_array[], type_point y_split_array[], type_point z_split_array[], struct SplitArraySize & split_array_size);
+
+/** @brief Get the Split array of x,y,z axis.  [by precise]
+*  @param data_set_size: the size of the dataset
+*  @param data_max_min: a structure store the x_min,x_max,y_min,y_max,z_min.z_max
+*  @param x_split_array: split array of x axis. from x_min to x_max
+*  @param split_array_size: the size of split array..contains x_split_size, y_split_size, z_split_size
+*  @return Void.
+*/
+//template<int X_SPLIT_SIZE, int Y_SPLIT_SIZE, int Z_SPLIT_SIZE>
+void SplitSubSpacePrecise(const int data_set_size, const struct MaxMin data_max_min, type_point x_split_array[], type_point y_split_array[], type_point z_split_array[], struct SplitArraySize & split_array_size);
+
 
 /** @brief Classify the dataset into different sub-spaces
 *  @param data_set:  store the useful dataset in a struct array.

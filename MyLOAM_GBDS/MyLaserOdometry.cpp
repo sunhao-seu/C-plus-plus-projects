@@ -305,38 +305,41 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 			kdtreeSurfLast->setInputCloud(laserCloudSurfLast);
 
 /*********************************************************************************/
-			//build the grid-based data structure of corner_last
-			//struct ThreeDimPoint corner_last_data_set[k_data_set_size];
-			//int corner_last_useful_data_set_size = 0;
-			//transform pointcloud to array
-			MyPointCloudToArray(laserCloudCornerLast, corner_last_data_set, corner_last_useful_data_set_size);
-			//struct MaxMin corner_last_data_max_min;
-			GetMaxMin(corner_last_data_set, corner_last_data_max_min, corner_last_useful_data_set_size);
-			//struct SplitArraySize corner_last_split_array_size;
-			//type_point corner_last_x_split_array[k_axis_spaces_max], corner_last_y_split_array[k_axis_spaces_max], corner_last_z_split_array[k_axis_spaces_max];
-			SplitSubSpace(corner_last_useful_data_set_size, corner_last_data_max_min, corner_last_x_split_array, corner_last_y_split_array, corner_last_z_split_array, corner_last_split_array_size);
-			//int corner_last_sub_sets[k_sub_region_max][k_sub_space_data_size];
-			//int corner_last_sub_sets_size[k_sub_region_max] = { 0 };		//important
-			DataClassify(corner_last_data_set, corner_last_useful_data_set_size, corner_last_x_split_array, corner_last_y_split_array, corner_last_z_split_array, corner_last_split_array_size, corner_last_sub_sets, corner_last_sub_sets_size);
+			////build the grid-based data structure of corner_last
+			////struct ThreeDimPoint corner_last_data_set[k_data_set_size];
+			////int corner_last_useful_data_set_size = 0;
+			////transform pointcloud to array
+			//MyPointCloudToArray(laserCloudCornerLast, corner_last_data_set, corner_last_useful_data_set_size);
+			////struct MaxMin corner_last_data_max_min;
+			//GetMaxMin(corner_last_data_set, corner_last_data_max_min, corner_last_useful_data_set_size);
+			////struct SplitArraySize corner_last_split_array_size;
+			////type_point corner_last_x_split_array[k_axis_spaces_max], corner_last_y_split_array[k_axis_spaces_max], corner_last_z_split_array[k_axis_spaces_max];
+			//
+			////SplitSubSpace(corner_last_useful_data_set_size, corner_last_data_max_min, corner_last_x_split_array, corner_last_y_split_array, corner_last_z_split_array, corner_last_split_array_size);
+			//SplitSubSpacePrecise(corner_last_useful_data_set_size, corner_last_data_max_min, corner_last_x_split_array, corner_last_y_split_array, corner_last_z_split_array, corner_last_split_array_size);
+			//
+			////int corner_last_sub_sets[k_sub_region_max][k_sub_space_data_size];
+			////int corner_last_sub_sets_size[k_sub_region_max] = { 0 };		//important
+			//DataClassify(corner_last_data_set, corner_last_useful_data_set_size, corner_last_x_split_array, corner_last_y_split_array, corner_last_z_split_array, corner_last_split_array_size, corner_last_sub_sets, corner_last_sub_sets_size);
 
-			//test the sub-sets
-			int valid_sub_spaces_size = 0;
-			for (int i = 0; i < corner_last_split_array_size.x_array_size * corner_last_split_array_size.y_array_size * corner_last_split_array_size.z_array_size; i++)
-			{
-				if (corner_last_sub_sets_size[i] > 0)
-				{
-					valid_sub_spaces_size++;
-					cout << corner_last_sub_sets_size[i] << "   ";
-				}
-			}
-			cout << endl << "totally " << valid_sub_spaces_size << " valid_sub_spaces via  " << corner_last_split_array_size.x_array_size * corner_last_split_array_size.y_array_size * corner_last_split_array_size.z_array_size << " whole spaces" << endl;
+			////test the sub-sets
+			//int valid_sub_spaces_size = 0;
+			//for (int i = 0; i < corner_last_split_array_size.x_array_size * corner_last_split_array_size.y_array_size * corner_last_split_array_size.z_array_size; i++)
+			//{
+			//	if (corner_last_sub_sets_size[i] > 0)
+			//	{
+			//		valid_sub_spaces_size++;
+			//		cout << corner_last_sub_sets_size[i] << "   ";
+			//	}
+			//}
+			//cout << endl << "totally " << valid_sub_spaces_size << " valid_sub_spaces via  " << corner_last_split_array_size.x_array_size * corner_last_split_array_size.y_array_size * corner_last_split_array_size.z_array_size << " whole spaces" << endl;
 
 
-			//build the grid-based data structure of surf_last_
-			//MyPointCloudToArray(laserCloudSurfLast, surf_last_data_set, surf_last_useful_data_set_size);
-			//GetMaxMin(surf_last_data_set, surf_last_data_max_min, surf_last_useful_data_set_size);
-			//SplitSubSpace(surf_last_useful_data_set_size, surf_last_data_max_min, surf_last_x_split_array, surf_last_y_split_array, surf_last_z_split_array, surf_last_split_array_size);
-			//DataClassify(surf_last_data_set, surf_last_useful_data_set_size, surf_last_x_split_array, surf_last_y_split_array, surf_last_z_split_array, surf_last_split_array_size, surf_last_sub_sets, surf_last_sub_sets_size);
+			////build the grid-based data structure of surf_last_
+			////MyPointCloudToArray(laserCloudSurfLast, surf_last_data_set, surf_last_useful_data_set_size);
+			////GetMaxMin(surf_last_data_set, surf_last_data_max_min, surf_last_useful_data_set_size);
+			////SplitSubSpace(surf_last_useful_data_set_size, surf_last_data_max_min, surf_last_x_split_array, surf_last_y_split_array, surf_last_z_split_array, surf_last_split_array_size);
+			////DataClassify(surf_last_data_set, surf_last_useful_data_set_size, surf_last_x_split_array, surf_last_y_split_array, surf_last_z_split_array, surf_last_split_array_size, surf_last_sub_sets, surf_last_sub_sets_size);
 
 /*********************************************************************************/
 			laserCloudCornerLastNum = laserCloudCornerLast->points.size();
@@ -380,29 +383,45 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 					if (iterCount % 5 == 0)
 					{
 						std::vector<int> indices;
+						
 						pcl::removeNaNFromPointCloud(*laserCloudCornerLast, *laserCloudCornerLast, indices);
 						//kd-tree查找一个最近距离点，边沿点未经过体素栅格滤波，一般边沿点本来就比较少，不做滤波
+						time3 = clock();
 						kdtreeCornerLast->nearestKSearch(pointSel, 1, pointSearchInd, pointSearchSqDis);
-/*********************************************************************************/
+
+#ifdef MY_SHOW_ODOM_TIME_PROFILE
+						time4 = clock();
+						time_last2 = (time4 - time3);
+						std::cout << "kdtree search tree time is : " << time_last2 << std::endl;
+
+#endif // MY_SHOW_ODOM_TIME_PROFILE
+
+			/*********************************************************************************/
 					
 
-						int record_ind = pointSearchInd[0];
-						float record_dis = pointSearchSqDis[0];
+						//int record_ind = pointSearchInd[0];
+						//float record_dis = pointSearchSqDis[0];
 
-						struct ThreeDimPoint my_point_sel;
-						MyPointXYZIToThreeDimPoint(pointSel, my_point_sel);
+						//struct ThreeDimPoint my_point_sel;
+						//MyPointXYZIToThreeDimPoint(pointSel, my_point_sel);
 
-						type_point corner_last_nearest_distance[k_query_set_size];
-						int corner_last_nearest_index[k_query_set_size];
-						//int corner_last_query_space_index = PCLCalculateIndex(my_point_sel, corner_last_x_split_array, corner_last_y_split_array, corner_last_z_split_array, corner_last_split_array_size);
-						SearchKNearestNeighbors(1, my_point_sel, corner_last_data_set, corner_last_sub_sets, corner_last_sub_sets_size, corner_last_x_split_array, corner_last_y_split_array, corner_last_z_split_array, corner_last_split_array_size, corner_last_nearest_index, corner_last_nearest_distance);
+						//time3 = clock();
 
-						pointSearchInd[0] = corner_last_nearest_index[0];
-						pointSearchSqDis[0] = corner_last_nearest_distance[0];
+						//type_point corner_last_nearest_distance[k_query_set_size];
+						//int corner_last_nearest_index[k_query_set_size];
+						////int corner_last_query_space_index = PCLCalculateIndex(my_point_sel, corner_last_x_split_array, corner_last_y_split_array, corner_last_z_split_array, corner_last_split_array_size);
+						//SearchKNearestNeighbors(1, my_point_sel, corner_last_data_set, corner_last_sub_sets, corner_last_sub_sets_size, corner_last_x_split_array, corner_last_y_split_array, corner_last_z_split_array, corner_last_split_array_size, corner_last_nearest_index, corner_last_nearest_distance);
 
-						//cout << "the nearest neighbor of " << pointSel.x << "," << pointSel.y << "," << pointSel.z << endl;;
-						//cout << "GBDS is " << corner_last_data_set[corner_last_nearest_index[0]].x << "," << corner_last_data_set[corner_last_nearest_index[0]].y << "," << corner_last_data_set[corner_last_nearest_index[0]].z << " with the distance is " << corner_last_nearest_distance[0] << endl;
-						//cout << "FLANN KD TREE is " << laserCloudCornerLast->points[record_ind].x << "," << laserCloudCornerLast->points[record_ind].y << "," << laserCloudCornerLast->points[record_ind].z << " with the distance is " << record_dis <<endl;
+						//time4 = clock();
+						//time_last2 = (time4 - time3);
+						//std::cout << "GBDS search time is : " << time_last2 << std::endl;
+
+						//pointSearchInd[0] = corner_last_nearest_index[0];
+						//pointSearchSqDis[0] = corner_last_nearest_distance[0];
+
+						////cout << "the nearest neighbor of " << pointSel.x << "," << pointSel.y << "," << pointSel.z << endl;;
+						////cout << "GBDS is " << corner_last_data_set[corner_last_nearest_index[0]].x << "," << corner_last_data_set[corner_last_nearest_index[0]].y << "," << corner_last_data_set[corner_last_nearest_index[0]].z << " with the distance is " << corner_last_nearest_distance[0] << endl;
+						////cout << "FLANN KD TREE is " << laserCloudCornerLast->points[record_ind].x << "," << laserCloudCornerLast->points[record_ind].y << "," << laserCloudCornerLast->points[record_ind].z << " with the distance is " << record_dis <<endl;
 /*********************************************************************************/
 						int closestPointInd = -1, minPointInd2 = -1;
 
@@ -949,36 +968,50 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 		//点足够多就构建kd-tree，否则弃用此帧，沿用上一帧数据的kd-tree
 		if (laserCloudCornerLastNum > 10 && laserCloudSurfLastNum > 100) {
 			//构建kd树，把当前特征点存入kd树种便于下次搜索； 可并行
+			time1 = clock();
 			kdtreeCornerLast->setInputCloud(laserCloudCornerLast);
+
+#ifdef MY_SHOW_ODOM_TIME_PROFILE	
+			//此处会打印大量数据，每搜索一次都会打印很多数据
+			time2 = clock();
+			time_last1 = (double)(time2 - time1);
+			std::cout << "kdtree build tree time is : " << time_last1 << std::endl;
+#endif
 			kdtreeSurfLast->setInputCloud(laserCloudSurfLast);
 
 /*********************************************************************************/
-			//build the grid-based data structure of corner_last
-			//struct ThreeDimPoint corner_last_data_set[k_data_set_size];
-			//int corner_last_useful_data_set_size = 0;
-			//transform pointcloud to array
-
-			MyPointCloudToArray(laserCloudCornerLast, corner_last_data_set, corner_last_useful_data_set_size);
-			//struct MaxMin corner_last_data_max_min;
-			GetMaxMin(corner_last_data_set, corner_last_data_max_min, corner_last_useful_data_set_size);
-			//struct SplitArraySize corner_last_split_array_size;
-			//type_point corner_last_x_split_array[k_axis_spaces_max], corner_last_y_split_array[k_axis_spaces_max], corner_last_z_split_array[k_axis_spaces_max];
-			SplitSubSpace(corner_last_useful_data_set_size, corner_last_data_max_min, corner_last_x_split_array, corner_last_y_split_array, corner_last_z_split_array, corner_last_split_array_size);
-			//int corner_last_sub_sets[k_sub_region_max][k_sub_space_data_size];
-			//int corner_last_sub_sets_size[k_sub_region_max] = { 0 };		//important
-			DataClassify(corner_last_data_set, corner_last_useful_data_set_size, corner_last_x_split_array, corner_last_y_split_array, corner_last_z_split_array, corner_last_split_array_size, corner_last_sub_sets, corner_last_sub_sets_size);
-
-			//test the sub-sets
-			int valid_sub_spaces_size = 0;
-			for (int i = 0; i < corner_last_split_array_size.x_array_size * corner_last_split_array_size.y_array_size * corner_last_split_array_size.z_array_size; i++)
-			{
-				if (corner_last_sub_sets_size[i] > 0)
-				{
-					valid_sub_spaces_size++;
-					cout << corner_last_sub_sets_size[i] << "   ";
-				}
-			}
-			cout << endl << "totally " << valid_sub_spaces_size << " valid_sub_spaces via  " << corner_last_split_array_size.x_array_size * corner_last_split_array_size.y_array_size * corner_last_split_array_size.z_array_size << " whole spaces" << endl;
+//			//build the grid-based data structure of corner_last
+//			//struct ThreeDimPoint corner_last_data_set[k_data_set_size];
+//			//int corner_last_useful_data_set_size = 0;
+//			//transform pointcloud to array
+//
+//			MyPointCloudToArray(laserCloudCornerLast, corner_last_data_set, corner_last_useful_data_set_size);
+//
+//			time1 = clock();
+//			GetMaxMin(corner_last_data_set, corner_last_data_max_min, corner_last_useful_data_set_size);
+//
+//			//SplitSubSpace(corner_last_useful_data_set_size, corner_last_data_max_min, corner_last_x_split_array, corner_last_y_split_array, corner_last_z_split_array, corner_last_split_array_size);
+//			SplitSubSpacePrecise(corner_last_useful_data_set_size, corner_last_data_max_min, corner_last_x_split_array, corner_last_y_split_array, corner_last_z_split_array, corner_last_split_array_size);
+//
+//
+//			DataClassify(corner_last_data_set, corner_last_useful_data_set_size, corner_last_x_split_array, corner_last_y_split_array, corner_last_z_split_array, corner_last_split_array_size, corner_last_sub_sets, corner_last_sub_sets_size);
+//#ifdef MY_SHOW_ODOM_TIME_PROFILE		
+//			time2 = clock();
+//			time_last1 = (double)(time2 - time1);
+//			std::cout << "GBDS establish time is : " << time_last1 << std::endl;
+//#endif
+//			//test the sub-sets
+//			int valid_sub_spaces_size = 0;
+//			for (int i = 0; i < corner_last_split_array_size.x_array_size * corner_last_split_array_size.y_array_size * corner_last_split_array_size.z_array_size; i++)
+//			{
+//				if (corner_last_sub_sets_size[i] > 0)
+//				{
+//					valid_sub_spaces_size++;
+//					cout << corner_last_sub_sets_size[i] << "   ";
+//				}
+//			}
+//			cout << endl << "data_set size: " << corner_last_useful_data_set_size << endl;
+//			cout << endl << "totally " << valid_sub_spaces_size << " valid_sub_spaces via  " << corner_last_split_array_size.x_array_size * corner_last_split_array_size.y_array_size * corner_last_split_array_size.z_array_size << " whole spaces" << endl;
 /*********************************************************************************/
 		}
 

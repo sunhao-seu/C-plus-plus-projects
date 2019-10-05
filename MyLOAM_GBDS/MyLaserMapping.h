@@ -129,5 +129,24 @@ private:
 
 	clock_t time1, time2, time3, time4;
 	double time_last1,time_last2,time_last3;
+
+
+	//my knn parameters
+	struct ThreeDimPoint map_corner_data_set[k_data_set_size];
+	int map_corner_useful_data_set_size = 0;
+	struct MaxMin map_corner_data_max_min;
+	struct SplitArraySize map_corner_split_array_size;
+	type_point map_corner_x_split_array[k_axis_spaces_max], map_corner_y_split_array[k_axis_spaces_max], map_corner_z_split_array[k_axis_spaces_max];
+	int map_corner_sub_sets[k_sub_region_max][k_sub_space_array_size];
+	int map_corner_sub_sets_size[k_sub_region_max] = { 0 };		//important
+
+	struct ThreeDimPoint map_surf_data_set[k_data_set_size];
+	int map_surf_useful_data_set_size = 0;
+	struct MaxMin map_surf_data_max_min;
+	struct SplitArraySize map_surf_split_array_size;
+	type_point map_surf_x_split_array[k_axis_spaces_max], map_surf_y_split_array[k_axis_spaces_max], map_surf_z_split_array[k_axis_spaces_max];
+	int map_surf_sub_sets[k_sub_region_max][k_sub_space_array_size];
+	int map_surf_sub_sets_size[k_sub_region_max] = { 0 };		//important
+
 };
 #endif

@@ -47,6 +47,9 @@
 //#define MY_VTK_MAP_VIEW_ON
 //#define MY_VTK_TRAJACTORY_VIEW_ON
 
+#define MY_SHOW_MAP_TIME_PROFILE
+//#define MY_SHOW_ODOM_TIME_PROFILE
+
 #include <pcl/io/vtk_io.h>
 #include<pcl/visualization/cloud_viewer.h>
 #include <pcl/visualization/pcl_visualizer.h>

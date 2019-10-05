@@ -3,9 +3,6 @@
 #include "MyLaserOdometry.h"
 #include "MyLaserMapping.h"
 
-#define MY_VTK_MAP_VIEW_ON
-#define MY_SHOW_TIME_PROFILE
-
 #ifdef MY_VTK_TRAJACTORY_VIEW_ON
 #undef MY_VTK_MAP_VIEW_ON
 #endif // MY_VTK_TRAJACTORY_VIEW_ON
