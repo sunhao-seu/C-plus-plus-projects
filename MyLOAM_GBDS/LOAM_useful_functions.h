@@ -47,8 +47,17 @@
 //#define MY_VTK_MAP_VIEW_ON
 //#define MY_VTK_TRAJACTORY_VIEW_ON
 
-#define MY_SHOW_MAP_TIME_PROFILE
+//#define MY_SHOW_MAP_TIME_PROFILE
 //#define MY_SHOW_ODOM_TIME_PROFILE
+
+//#define USE_GBDS_ON
+//#define USE_KDTREE_ON
+#define BOTH_KDTREE_AND_GBDS
+
+#ifdef BOTH_KDTREE_AND_GBDS
+#undef USE_KDTREE_ON;
+#define USE_GBDS_ON
+#endif
 
 #include <pcl/io/vtk_io.h>
 #include<pcl/visualization/cloud_viewer.h>
@@ -89,16 +98,16 @@ typedef pcl::PointCloud<PointXYZRGB> PointCloudXYZRGB;
 /* Return Struct of Registration*/
 struct ScanRegistrationBack {
 
-	pcl::PointCloud<PointT>::Ptr laserCloud;		//°´ÏßÕûÀíÖ®ºóµÄµã¼¯
-	pcl::PointCloud<PointT> cornerPointsSharp;		//¸ü¼âÈñµã¡£¡£Ò²¾ÍÊÇ¸Ã¶ÎÄÚ¼âÈñµãµÄ¸öÊı³¬¹ı4Ê±Ê¶±ğµ½µÄ¼âÈñµã´æÈëÕâ¸öÊı×é
-	pcl::PointCloud<PointT> cornerPointsLessSharp;	//Ò»°ã¼âÈñµã
-	pcl::PointCloud<PointT> surfPointsFlat;		//surfPointsLessFlat °üº¬ surfPointsFlat¡£¡£¡£
+	pcl::PointCloud<PointT>::Ptr laserCloud;		//æŒ‰çº¿æ•´ç†ä¹‹åçš„ç‚¹é›†
+	pcl::PointCloud<PointT> cornerPointsSharp;		//æ›´å°–é”ç‚¹ã€‚ã€‚ä¹Ÿå°±æ˜¯è¯¥æ®µå†…å°–é”ç‚¹çš„ä¸ªæ•°è¶…è¿‡4æ—¶è¯†åˆ«åˆ°çš„å°–é”ç‚¹å­˜å…¥è¿™ä¸ªæ•°ç»„
+	pcl::PointCloud<PointT> cornerPointsLessSharp;	//ä¸€èˆ¬å°–é”ç‚¹
+	pcl::PointCloud<PointT> surfPointsFlat;		//surfPointsLessFlat åŒ…å« surfPointsFlatã€‚ã€‚ã€‚
 	pcl::PointCloud<PointT> surfPointsLessFlat;
 	pcl::PointCloud<pcl::PointXYZ> imuTrans;
 
 };
 
-// registrationÖĞµÄsharpÔÚOdometryÖĞÊÇcorner; flatÔÚÕâÀïÊÇsurf
+// registrationä¸­çš„sharpåœ¨Odometryä¸­æ˜¯corner; flatåœ¨è¿™é‡Œæ˜¯surf
 struct LaserOdometryBack {
 
 	float transformSum[6];
@@ -127,9 +136,9 @@ struct MaintenanceBack {
 Change pcap data to PCL pointCloud Data
 */
 PointCloud::Ptr pcap2PointCloud(std::vector<_array> &Points);
-PointCloudXYZ::Ptr PointT2PointXYZ(const PointCloud::Ptr & PointTCloud);	//XYZI×ª»»³ÉXYZ£¬ÏÔÊ¾µÄµãÔÆÓÉ²ÊÉ«±ä³ÉºÚ°×µÄ==
-PointCloudXYZRGB PointT2PointXYZRGB(const PointCloud & PointTCloud);	//XYZI×ª»»³ÉXYZRGB£¬ÏÔÊ¾µÄµãÔÆÓÉ²ÊÉ«±ä³ÉºÚ°×µÄ==ÊäÈë²»ÊÇÖ¸Õë£¬¶øÊÇÊı×é
-PointCloudXYZRGB::Ptr Show_Registration(ScanRegistrationBack & ScanBackValue2);	//ÏÔÊ¾registrationµÄ½á¹û£¬µ±Ê±²»ÖªµÀÔõÃ´µ÷ÑÕÉ«£¬£¬ÖØĞÂÉú³ÉÁËRGBµãÔÆ
+PointCloudXYZ::Ptr PointT2PointXYZ(const PointCloud::Ptr & PointTCloud);	//XYZIè½¬æ¢æˆXYZï¼Œæ˜¾ç¤ºçš„ç‚¹äº‘ç”±å½©è‰²å˜æˆé»‘ç™½çš„==
+PointCloudXYZRGB PointT2PointXYZRGB(const PointCloud & PointTCloud);	//XYZIè½¬æ¢æˆXYZRGBï¼Œæ˜¾ç¤ºçš„ç‚¹äº‘ç”±å½©è‰²å˜æˆé»‘ç™½çš„==è¾“å…¥ä¸æ˜¯æŒ‡é’ˆï¼Œè€Œæ˜¯æ•°ç»„
+PointCloudXYZRGB::Ptr Show_Registration(ScanRegistrationBack & ScanBackValue2);	//æ˜¾ç¤ºregistrationçš„ç»“æœï¼Œå½“æ—¶ä¸çŸ¥é“æ€ä¹ˆè°ƒé¢œè‰²ï¼Œï¼Œé‡æ–°ç”Ÿæˆäº†RGBç‚¹äº‘
 void Lidar_Trajactory(const float LidarPose[6], PointCloud::Ptr & Trajactory);	//from transform matrix to pointcloud datatype to show the trajactory in the map
-void Read_PCD_colored_Show(string & filename);		//¶ÁpcdÎÄ¼ş£¬²¢²ÊÉ«ÏÔÊ¾¸ÃµãÔÆ
-void Read_PCD_Show_trajactory(string Mapname, string Trajactoryname);	//¶ÁµØÍ¼ÎÄ¼şÓë¹ì¼£ÎÄ¼ş£¬ÔÚµØÍ¼ÀïÏÔÊ¾¹ì¼£
+void Read_PCD_colored_Show(string & filename);		//è¯»pcdæ–‡ä»¶ï¼Œå¹¶å½©è‰²æ˜¾ç¤ºè¯¥ç‚¹äº‘
+void Read_PCD_Show_trajactory(string Mapname, string Trajactoryname);	//è¯»åœ°å›¾æ–‡ä»¶ä¸è½¨è¿¹æ–‡ä»¶ï¼Œåœ¨åœ°å›¾é‡Œæ˜¾ç¤ºè½¨è¿¹

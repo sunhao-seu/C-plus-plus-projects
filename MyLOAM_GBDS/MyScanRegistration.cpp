@@ -1,7 +1,7 @@
 #include "MyScanRegistration.h"
-const double ScanRegistration::scanPeriod = 0.1;	//¼¤¹âÀ×´ïÉ¨ÃèÆµÂÊ
+const double ScanRegistration::scanPeriod = 0.1;	//æ¿€å…‰é›·è¾¾æ‰«æé¢‘ç‡
 
-//ÀàµÄ³õÊ¼»¯º¯Êı
+//ç±»çš„åˆå§‹åŒ–å‡½æ•°
 ScanRegistration::ScanRegistration()
 {
 	systemInited = false;
@@ -23,26 +23,26 @@ ScanRegistration::ScanRegistration()
 ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& laserCloudIn1)
 {
 	// N_SCANS=16; FOR VLP16 RADAR
-	std::vector<int> scanStartInd(N_SCANS, 0);	//Ã¿ÌõÏßµÄ×ö²Ù×÷µÄÆğÊ¼µãË÷ÒıÓë½áÊøµãË÷Òı
+	std::vector<int> scanStartInd(N_SCANS, 0);	//æ¯æ¡çº¿çš„åšæ“ä½œçš„èµ·å§‹ç‚¹ç´¢å¼•ä¸ç»“æŸç‚¹ç´¢å¼•
 	std::vector<int> scanEndInd(N_SCANS, 0);
 
 	PointCloud laserCloudIn;
 	laserCloudIn.clear();
-	laserCloudIn = laserCloudIn1;		//copy cloud data from input parameter  +=¡£¡££¿£¿
+	laserCloudIn = laserCloudIn1;		//copy cloud data from input parameter  +=ã€‚ã€‚ï¼Ÿï¼Ÿ
 	std::vector<int> indices;
 	pcl::removeNaNFromPointCloud(laserCloudIn, laserCloudIn, indices);	//remove nan points from cloud points
 
-	int cloudSize = laserCloudIn.points.size();		//µãÔÆÖĞµãµÄ¸öÊı
-	//À×´ïµãÔÆpcapÒ»Ö¡²»Ò»¶¨ÊÇÒ»È¦£¬¿ÉÄÜÖ»ÓĞ1/5È¦¡£¡£¡£
-	//lidar scan¿ªÊ¼µãµÄĞı×ª½Ç,atan2·¶Î§[-pi,+pi],¼ÆËãĞı×ª½ÇÊ±È¡¸ººÅÊÇÒòÎªvelodyneÊÇË³Ê±ÕëĞı×ª
-	float startOri = -atan2(laserCloudIn.points[0].y, laserCloudIn.points[0].x);	//atan·¶Î§ÊÇ[-pi,pi]
-	//lidar scan½áÊøµãµÄĞı×ª½Ç£¬¼Ó2*piÊ¹µãÔÆĞı×ªÖÜÆÚÎª2*pi;  [pi,3pi]
+	int cloudSize = laserCloudIn.points.size();		//ç‚¹äº‘ä¸­ç‚¹çš„ä¸ªæ•°
+	//é›·è¾¾ç‚¹äº‘pcapä¸€å¸§ä¸ä¸€å®šæ˜¯ä¸€åœˆï¼Œå¯èƒ½åªæœ‰1/5åœˆã€‚ã€‚ã€‚
+	//lidar scanå¼€å§‹ç‚¹çš„æ—‹è½¬è§’,atan2èŒƒå›´[-pi,+pi],è®¡ç®—æ—‹è½¬è§’æ—¶å–è´Ÿå·æ˜¯å› ä¸ºvelodyneæ˜¯é¡ºæ—¶é’ˆæ—‹è½¬
+	float startOri = -atan2(laserCloudIn.points[0].y, laserCloudIn.points[0].x);	//atanèŒƒå›´æ˜¯[-pi,pi]
+	//lidar scanç»“æŸç‚¹çš„æ—‹è½¬è§’ï¼ŒåŠ 2*piä½¿ç‚¹äº‘æ—‹è½¬å‘¨æœŸä¸º2*pi;  [pi,3pi]
 	float endOri = -atan2(laserCloudIn.points[cloudSize - 1].y,
 		laserCloudIn.points[cloudSize - 1].x) + 2 * M_PI;
 
-	//½áÊø·½Î»½ÇÓë¿ªÊ¼·½Î»½Ç²îÖµ¿ØÖÆÔÚ(PI,3*PI)·¶Î§£¬ÔÊĞílidar²»ÊÇÒ»¸öÔ²ÖÜÉ¨Ãè
-	//Õı³£Çé¿öÏÂÔÚÕâ¸ö·¶Î§ÄÚ£ºpi < endOri - startOri < 3*pi£¬Òì³£ÔòĞŞÕı
-	//PCAP °üÀïµÄÊı¾İÓ¦¸Ã±»ÌØÊâ´¦Àí¹ı£¬½ø²»ÁËÕâÁ½¸öÅĞ¶Ï£¬Ã¿´Î¿ªÊ¼µã¶¼ÊÇ-pi/2,½áÊøµã3pi/2¡£¸ÕºÃÒ»¸öÔ²ÖÜ¡£¡£¡£
+	//ç»“æŸæ–¹ä½è§’ä¸å¼€å§‹æ–¹ä½è§’å·®å€¼æ§åˆ¶åœ¨(PI,3*PI)èŒƒå›´ï¼Œå…è®¸lidarä¸æ˜¯ä¸€ä¸ªåœ†å‘¨æ‰«æ
+	//æ­£å¸¸æƒ…å†µä¸‹åœ¨è¿™ä¸ªèŒƒå›´å†…ï¼špi < endOri - startOri < 3*piï¼Œå¼‚å¸¸åˆ™ä¿®æ­£
+	//PCAP åŒ…é‡Œçš„æ•°æ®åº”è¯¥è¢«ç‰¹æ®Šå¤„ç†è¿‡ï¼Œè¿›ä¸äº†è¿™ä¸¤ä¸ªåˆ¤æ–­ï¼Œæ¯æ¬¡å¼€å§‹ç‚¹éƒ½æ˜¯-pi/2,ç»“æŸç‚¹3pi/2ã€‚åˆšå¥½ä¸€ä¸ªåœ†å‘¨ã€‚ã€‚ã€‚
 	if (endOri - startOri > 3 * M_PI) {
 		endOri -= 2 * M_PI;
 	}
@@ -52,27 +52,27 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 
 
 	PointT point;
-	int count = cloudSize;	//¼ÆÊıµãÔÆÓĞĞ§µãµÄ¸öÊı
-	bool halfPassed = false;  // judge whether the point's z/x angle over pi£» if over, compare with end_ori.
+	int count = cloudSize;	//è®¡æ•°ç‚¹äº‘æœ‰æ•ˆç‚¹çš„ä¸ªæ•°
+	bool halfPassed = false;  // judge whether the point's z/x angle over piï¼› if over, compare with end_ori.
 	std::vector<PointCloud> laserCloudScans(N_SCANS);
 	// Calculate all SCANID of all points, and calculate intensity by SCANID+reltime
 	for (int i = 0; i < cloudSize; i++)
 	{
-		/*imuÎªxÖáÏòÇ°,yÖáÏò×ó,zÖáÏòÉÏµÄÓÒÊÖ×ø±êÏµ£¬
-		velodyne lidar±»°²×°ÎªxÖáÏòÇ°, yÖáÏò×ó, zÖáÏòÉÏµÄÓÒÊÖ×ø±êÏµ£¬
-		scanRegistration»á°ÑÁ½ÕßÍ¨¹ı½»»»×ø±êÖá£¬¶¼Í³Ò»µ½zÖáÏòÇ°, xÖáÏò×ó, yÖáÏòÉÏµÄÓÒÊÖ×ø±êÏµ
-		£¬ÕâÊÇJ.ZhangµÄÂÛÎÄÀïÃæÊ¹ÓÃµÄ×ø±êÏµ
-		½»»»ºó£ºR = Ry(yaw)*Rx(pitch)*Rz(roll)*/
+		/*imuä¸ºxè½´å‘å‰,yè½´å‘å·¦,zè½´å‘ä¸Šçš„å³æ‰‹åæ ‡ç³»ï¼Œ
+		velodyne lidarè¢«å®‰è£…ä¸ºxè½´å‘å‰, yè½´å‘å·¦, zè½´å‘ä¸Šçš„å³æ‰‹åæ ‡ç³»ï¼Œ
+		scanRegistrationä¼šæŠŠä¸¤è€…é€šè¿‡äº¤æ¢åæ ‡è½´ï¼Œéƒ½ç»Ÿä¸€åˆ°zè½´å‘å‰, xè½´å‘å·¦, yè½´å‘ä¸Šçš„å³æ‰‹åæ ‡ç³»
+		ï¼Œè¿™æ˜¯J.Zhangçš„è®ºæ–‡é‡Œé¢ä½¿ç”¨çš„åæ ‡ç³»
+		äº¤æ¢åï¼šR = Ry(yaw)*Rx(pitch)*Rz(roll)*/
 		point.x = laserCloudIn.points[i].y;
 		point.y = laserCloudIn.points[i].z;
 		point.z = laserCloudIn.points[i].x;
 
-		float angle = atan(point.y / sqrt(point.x * point.x + point.z * point.z)) * 180 / M_PI; //µÃµ½ÊúÖ±½Ç£¬Ò²¿ÉÒÔËµÊÇ¸©Ñö½Ç
+		float angle = atan(point.y / sqrt(point.x * point.x + point.z * point.z)) * 180 / M_PI; //å¾—åˆ°ç«–ç›´è§’ï¼Œä¹Ÿå¯ä»¥è¯´æ˜¯ä¿¯ä»°è§’
 		int scanID;
-		int roundedAngle = int(angle + (angle<0.0 ? -0.5 : +0.5));	//ÓÃint½Ø¶Ï£¬Ïàµ±ÓÚËÄÉáÎåÈë½Ç¶È
-		// ½Ç¶È´óÓÚÁã£¬ÓÉĞ¡µ½´ó»®ÈëÅ¼ÊıÏß£¨0->16£©£»½Ç¶ÈĞ¡ÓÚÁã£¬ÓÉ´óµ½Ğ¡»®ÈëÆæÊıÏß(15->1);ÕâÊÇÒòÎªÀ×´ïµÄÏßÅÅĞò¾ÍÊÇÕâÑùÅÅĞòµÄ¡£¡£¡£
-		//µ«Õâ¸ö´úÂëÊÇ½Ç¶ÈÊÇÕıµÄ¾ÍÖ±½Ó·Ö¸øÏßºÅ£» ½Ç¶ÈÊÇ¸ºµÄ¾ÍÈ¡·´·Ö¸øÏßºÅ¡£¡£¡£
-		//ÎÒÃ÷°×ÁË¡£¡£Õâ¸öscanIDÖ»ÊÇÎªÁË°´¸ß¶ÈÅÅºÃ£»±ãÓÚ¼ÆËãÒÔ¼°ÏÔÊ¾
+		int roundedAngle = int(angle + (angle<0.0 ? -0.5 : +0.5));	//ç”¨intæˆªæ–­ï¼Œç›¸å½“äºå››èˆäº”å…¥è§’åº¦
+		// è§’åº¦å¤§äºé›¶ï¼Œç”±å°åˆ°å¤§åˆ’å…¥å¶æ•°çº¿ï¼ˆ0->16ï¼‰ï¼›è§’åº¦å°äºé›¶ï¼Œç”±å¤§åˆ°å°åˆ’å…¥å¥‡æ•°çº¿(15->1);è¿™æ˜¯å› ä¸ºé›·è¾¾çš„çº¿æ’åºå°±æ˜¯è¿™æ ·æ’åºçš„ã€‚ã€‚ã€‚
+		//ä½†è¿™ä¸ªä»£ç æ˜¯è§’åº¦æ˜¯æ­£çš„å°±ç›´æ¥åˆ†ç»™çº¿å·ï¼› è§’åº¦æ˜¯è´Ÿçš„å°±å–ååˆ†ç»™çº¿å·ã€‚ã€‚ã€‚
+		//æˆ‘æ˜ç™½äº†ã€‚ã€‚è¿™ä¸ªscanIDåªæ˜¯ä¸ºäº†æŒ‰é«˜åº¦æ’å¥½ï¼›ä¾¿äºè®¡ç®—ä»¥åŠæ˜¾ç¤º
 		if (roundedAngle > 0)
 		{
 			scanID = roundedAngle;
@@ -81,7 +81,7 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 		{
 			scanID = roundedAngle + (N_SCANS - 1);
 		}
-		if (scanID > (N_SCANS - 1) || scanID < 0) // ½«16ÏßÒÔÍâµÄÔÓµãÌŞ³ı
+		if (scanID > (N_SCANS - 1) || scanID < 0) // å°†16çº¿ä»¥å¤–çš„æ‚ç‚¹å‰”é™¤
 		{
 			count--;
 			continue;
@@ -89,11 +89,11 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 		}
 		//std::cout << "angle: " << angle << std::endl << "ScanID: " << scanID << std::endl;
 
-		//ÎªÉ¶ÊÇ-atan2¶ø²»ÊÇatan2;Ë³Ê±ÕëĞı×ª
+		//ä¸ºå•¥æ˜¯-atan2è€Œä¸æ˜¯atan2;é¡ºæ—¶é’ˆæ—‹è½¬
 		float ori = -atan2(point.x, point.z); 
-		// z/x ÊúÖ±·½ÏòÓëxÖáµÄ¼Ğ½Ç,Ö®ºóµÄ²Ù×÷Îªµ÷Õû´Ë½Ç¶È·¶Î§¡£¡£¡£´íÁË£¬y²ÅÊÇÊúÖ±·½Ïò£»Õâ¸öÊÇÎªÁËÅĞ¶Ïreltime
-		//Ã²ËÆÊÇÅĞ¶ÏµÚÒ»¸ö´¦ÀíµÄµãÓĞÃ»ÓĞ¹ı°ë£»¹ı°ëÁËÓëendori±È½Ï£» ÉÔÎ¢¼õĞ¡Ò»µãÎó²î
-		//¶øÇÒÖ»Òª±ä³Étrue,Ö»ÄÜµÈÏÂÒ»Ö¡²ÅÄÜÔÙ±ä»Øfalse
+		// z/x ç«–ç›´æ–¹å‘ä¸xè½´çš„å¤¹è§’,ä¹‹åçš„æ“ä½œä¸ºè°ƒæ•´æ­¤è§’åº¦èŒƒå›´ã€‚ã€‚ã€‚é”™äº†ï¼Œyæ‰æ˜¯ç«–ç›´æ–¹å‘ï¼›è¿™ä¸ªæ˜¯ä¸ºäº†åˆ¤æ–­reltime
+		//è²Œä¼¼æ˜¯åˆ¤æ–­ç¬¬ä¸€ä¸ªå¤„ç†çš„ç‚¹æœ‰æ²¡æœ‰è¿‡åŠï¼›è¿‡åŠäº†ä¸endoriæ¯”è¾ƒï¼› ç¨å¾®å‡å°ä¸€ç‚¹è¯¯å·®
+		//è€Œä¸”åªè¦å˜æˆtrue,åªèƒ½ç­‰ä¸‹ä¸€å¸§æ‰èƒ½å†å˜å›false
 		if (!halfPassed) {
 			// adjust the ori to [startOri-1/2pi,startOri+3/2pi]
 			if (ori < startOri - M_PI / 2) {
@@ -119,9 +119,9 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 			}
 		}
 
-		//-0.5 < relTime < 1.5£¨µãĞı×ªµÄ½Ç¶ÈÓëÕû¸öÖÜÆÚĞı×ª½Ç¶ÈµÄ±ÈÂÊ, ¼´µãÔÆÖĞµãµÄÏà¶ÔÊ±¼ä£©
+		//-0.5 < relTime < 1.5ï¼ˆç‚¹æ—‹è½¬çš„è§’åº¦ä¸æ•´ä¸ªå‘¨æœŸæ—‹è½¬è§’åº¦çš„æ¯”ç‡, å³ç‚¹äº‘ä¸­ç‚¹çš„ç›¸å¯¹æ—¶é—´ï¼‰
 		float relTime = (ori - startOri) / (endOri - startOri);
-		//µãÇ¿¶È=ÏßºÅ+µãÏà¶ÔÊ±¼ä£¨¼´Ò»¸öÕûÊı+Ò»¸öĞ¡Êı£¬ÕûÊı²¿·ÖÊÇÏßºÅ£¬Ğ¡Êı²¿·ÖÊÇ¸ÃµãµÄÏà¶ÔÊ±¼ä£©,ÔÈËÙÉ¨Ãè£º¸ù¾İµ±Ç°É¨ÃèµÄ½Ç¶ÈºÍÉ¨ÃèÖÜÆÚ¼ÆËãÏà¶ÔÉ¨ÃèÆğÊ¼Î»ÖÃµÄÊ±¼ä
+		//ç‚¹å¼ºåº¦=çº¿å·+ç‚¹ç›¸å¯¹æ—¶é—´ï¼ˆå³ä¸€ä¸ªæ•´æ•°+ä¸€ä¸ªå°æ•°ï¼Œæ•´æ•°éƒ¨åˆ†æ˜¯çº¿å·ï¼Œå°æ•°éƒ¨åˆ†æ˜¯è¯¥ç‚¹çš„ç›¸å¯¹æ—¶é—´ï¼‰,åŒ€é€Ÿæ‰«æï¼šæ ¹æ®å½“å‰æ‰«æçš„è§’åº¦å’Œæ‰«æå‘¨æœŸè®¡ç®—ç›¸å¯¹æ‰«æèµ·å§‹ä½ç½®çš„æ—¶é—´
 		point.intensity = scanID + scanPeriod * relTime;
 
 		//region for IMU process
@@ -129,14 +129,14 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 		laserCloudScans[scanID].push_back(point);
 
 	}
-	cloudSize = count;	//ÅÅÍêĞòºóµãÔÆÖĞµÄµãµÄ¸öÊı
+	cloudSize = count;	//æ’å®Œåºåç‚¹äº‘ä¸­çš„ç‚¹çš„ä¸ªæ•°
 
-	PointCloud::Ptr PointCloudOrdered(new PointCloud());	//°´Ïß¾ÛÀàÖ®ºóµÄµã¼¯
+	PointCloud::Ptr PointCloudOrdered(new PointCloud());	//æŒ‰çº¿èšç±»ä¹‹åçš„ç‚¹é›†
 	for (int i = 0; i < N_SCANS; i++) {
-		*PointCloudOrdered += laserCloudScans[i];//ËùÓĞ±»·Ö²ãµÄµã,Ò»¹²count¸öµã£¨²»ÄÜ±»·Ö²ãµÄµãÒÑ¾­±»È¥µô£©
+		*PointCloudOrdered += laserCloudScans[i];//æ‰€æœ‰è¢«åˆ†å±‚çš„ç‚¹,ä¸€å…±countä¸ªç‚¹ï¼ˆä¸èƒ½è¢«åˆ†å±‚çš„ç‚¹å·²ç»è¢«å»æ‰ï¼‰
 	}
 
-	//ÇóÃ¿¸öµãµÄÇúÂÊ£¬Ã¿ÌõÏßÇ°ºóÎå¸öµã²»Òª£»
+	//æ±‚æ¯ä¸ªç‚¹çš„æ›²ç‡ï¼Œæ¯æ¡çº¿å‰åäº”ä¸ªç‚¹ä¸è¦ï¼›
 	int scanCount = -1;
 	for (int i = 5; i < cloudSize - 5; i++)
 	{
@@ -160,45 +160,45 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 			+ PointCloudOrdered->points[i + 5].z;
 		cloudCurvature[i] = diffX * diffX + diffY * diffY + diffZ * diffZ;
 
-		//Ïà¹ØÊı×é³õÊ¼»¯¹¤×÷
-		cloudSortInd[i] = i;		//ÓĞĞ§ÇúÂÊµãµÄË÷Òı
+		//ç›¸å…³æ•°ç»„åˆå§‹åŒ–å·¥ä½œ
+		cloudSortInd[i] = i;		//æœ‰æ•ˆæ›²ç‡ç‚¹çš„ç´¢å¼•
 		cloudNeighborPicked[i] = 0;
 		cloudNeighborPickedForCorner[i] = 0;
 		cloudLabel[i] = 0;
 
-		//startind and endind£¬Ã¿ÌõÏßÖ»½øÈëÕâ¸öifÒ»´Î¡£ÎªºóÃæ·Ö³É6µÈ·Ö×ö×¼±¸
+		//startind and endindï¼Œæ¯æ¡çº¿åªè¿›å…¥è¿™ä¸ªifä¸€æ¬¡ã€‚ä¸ºåé¢åˆ†æˆ6ç­‰åˆ†åšå‡†å¤‡
 		if (int(PointCloudOrdered->points[i].intensity) != scanCount)
 		{
 			scanCount = int(PointCloudOrdered->points[i].intensity);
 
 			if (scanCount > 0 && scanCount < N_SCANS) {
 				scanStartInd[scanCount] = i + 5;
-				scanEndInd[scanCount - 1] = i - 5;//Ã¿Ò»ÏßÇ°Îå¸öµãºÍºóÎå¸öµã²»Òª
+				scanEndInd[scanCount - 1] = i - 5;//æ¯ä¸€çº¿å‰äº”ä¸ªç‚¹å’Œåäº”ä¸ªç‚¹ä¸è¦
 			}
 		}
 	}
-	//¶îÍâ´¦Àí×î¿ªÊ¼µãÓë×îÖÕµã
+	//é¢å¤–å¤„ç†æœ€å¼€å§‹ç‚¹ä¸æœ€ç»ˆç‚¹
 	scanStartInd[0] = 5;
 	scanEndInd.back() = cloudSize - 5;
 
-	/*±éÀúËùÓĞµã£¨³ıÈ¥Ç°Îå¸öºÍºóÁù¸ö£©£¬ÅĞ¶Ï¸Ãµã¼°ÆäÖÜ±ßµãÊÇ·ñ¿ÉÒÔ×÷ÎªÌØÕ÷µãÎ»£º
-	µ±Ä³µã¼°Æäºóµã¼äµÄ¾àÀëÆ½·½´óÓÚÄ³ãĞÖµa£¨ËµÃ÷ÕâÁ½µãÓĞÒ»¶¨¾àÀë£©£¬ÇÒÁ½ÏòÁ¿¼Ğ½ÇĞ¡ÓÚÄ³ãĞÖµbÊ±£¨¼Ğ½ÇĞ¡¾Í¿ÉÄÜ´æÔÚÕÚµ²£©£¬
-	½«ÆäÒ»²àµÄÁÙ½ü6¸öµãÉèÎª²»¿É±ê¼ÇÎªÌØÕ÷µãµÄµã£»ÈôÄ³µãµ½ÆäÇ°ºóÁ½µãµÄ¾àÀë¾ù´óÓÚc±¶µÄ¸ÃµãÉî¶È£¬
-	Ôò¸ÃµãÅĞ¶¨Îª²»¿É±ê¼ÇÌØÕ÷µãµÄµã£¨ÈëÉä½ÇÔ½Ğ¡£¬µã¼ä¾àÔ½´ó£¬¼´¼¤¹â·¢Éä·½ÏòÓëÍ¶Éäµ½µÄÆ½ÃæÔ½½üËÆË®Æ½£©¡£*/
-	// Ç°ÃæÒÑ¾­½«ËùÓĞµã°´Ïß·ÖºÃÁËÖ®ºóÔÙµ¼Èë
-	//ÏÈ´¦Àí½Çµã£¬edge points
+	/*éå†æ‰€æœ‰ç‚¹ï¼ˆé™¤å»å‰äº”ä¸ªå’Œåå…­ä¸ªï¼‰ï¼Œåˆ¤æ–­è¯¥ç‚¹åŠå…¶å‘¨è¾¹ç‚¹æ˜¯å¦å¯ä»¥ä½œä¸ºç‰¹å¾ç‚¹ä½ï¼š
+	å½“æŸç‚¹åŠå…¶åç‚¹é—´çš„è·ç¦»å¹³æ–¹å¤§äºæŸé˜ˆå€¼aï¼ˆè¯´æ˜è¿™ä¸¤ç‚¹æœ‰ä¸€å®šè·ç¦»ï¼‰ï¼Œä¸”ä¸¤å‘é‡å¤¹è§’å°äºæŸé˜ˆå€¼bæ—¶ï¼ˆå¤¹è§’å°å°±å¯èƒ½å­˜åœ¨é®æŒ¡ï¼‰ï¼Œ
+	å°†å…¶ä¸€ä¾§çš„ä¸´è¿‘6ä¸ªç‚¹è®¾ä¸ºä¸å¯æ ‡è®°ä¸ºç‰¹å¾ç‚¹çš„ç‚¹ï¼›è‹¥æŸç‚¹åˆ°å…¶å‰åä¸¤ç‚¹çš„è·ç¦»å‡å¤§äºcå€çš„è¯¥ç‚¹æ·±åº¦ï¼Œ
+	åˆ™è¯¥ç‚¹åˆ¤å®šä¸ºä¸å¯æ ‡è®°ç‰¹å¾ç‚¹çš„ç‚¹ï¼ˆå…¥å°„è§’è¶Šå°ï¼Œç‚¹é—´è·è¶Šå¤§ï¼Œå³æ¿€å…‰å‘å°„æ–¹å‘ä¸æŠ•å°„åˆ°çš„å¹³é¢è¶Šè¿‘ä¼¼æ°´å¹³ï¼‰ã€‚*/
+	// å‰é¢å·²ç»å°†æ‰€æœ‰ç‚¹æŒ‰çº¿åˆ†å¥½äº†ä¹‹åå†å¯¼å…¥
+	//å…ˆå¤„ç†è§’ç‚¹ï¼Œedge points
 	for (int i = 5; i < cloudSize - 6; i++)
 	{
-		//Ç°ºóÁ½¸öµãµÄ¾àÀëÆ½·½
+		//å‰åä¸¤ä¸ªç‚¹çš„è·ç¦»å¹³æ–¹
 		float diffX = PointCloudOrdered->points[i + 1].x - PointCloudOrdered->points[i].x;
 		float diffY = PointCloudOrdered->points[i + 1].y - PointCloudOrdered->points[i].y;
 		float diffZ = PointCloudOrdered->points[i + 1].z - PointCloudOrdered->points[i].z;
 		float diff = diffX * diffX + diffY * diffY + diffZ * diffZ;
 
-		//Ç°ºóÁ½¸öµã¾àÀë³¬¹ıãĞÖµ²Å¿ÉÄÜÊÇÌØÕ÷µã
+		//å‰åä¸¤ä¸ªç‚¹è·ç¦»è¶…è¿‡é˜ˆå€¼æ‰å¯èƒ½æ˜¯ç‰¹å¾ç‚¹
 		if (diff > 0.1)
 		{
-			//µãµ½¼¤¹âÀ×´ïµÄ¾àÀë
+			//ç‚¹åˆ°æ¿€å…‰é›·è¾¾çš„è·ç¦»
 			float depth1 = sqrt(PointCloudOrdered->points[i].x * PointCloudOrdered->points[i].x +
 				PointCloudOrdered->points[i].y * PointCloudOrdered->points[i].y +
 				PointCloudOrdered->points[i].z * PointCloudOrdered->points[i].z);
@@ -207,18 +207,18 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 				PointCloudOrdered->points[i + 1].y * PointCloudOrdered->points[i + 1].y +
 				PointCloudOrdered->points[i + 1].z * PointCloudOrdered->points[i + 1].z);
 
-			/* Õë¶ÔÂÛÎÄÖĞ(b)Çé¿ö */
+			/* é’ˆå¯¹è®ºæ–‡ä¸­(b)æƒ…å†µ */
 			if (depth1 > depth2)
 			{
-				//Èç¹ûÉî¶È²»Ò»ÑùµÄ»°£¬½«Ç°ºóÁ½¸öµãÀ­µ½Í¬Ò»¸öÇòÃæÉÏ¼ÆËãÇúÂÊ
+				//å¦‚æœæ·±åº¦ä¸ä¸€æ ·çš„è¯ï¼Œå°†å‰åä¸¤ä¸ªç‚¹æ‹‰åˆ°åŒä¸€ä¸ªçƒé¢ä¸Šè®¡ç®—æ›²ç‡
 				diffX = PointCloudOrdered->points[i + 1].x - PointCloudOrdered->points[i].x * depth2 / depth1;
 				diffY = PointCloudOrdered->points[i + 1].y - PointCloudOrdered->points[i].y * depth2 / depth1;
-				diffZ = PointCloudOrdered->points[i + 1].z - PointCloudOrdered->points[i].z * depth2 / depth1;// £¿£¿¹¹½¨ÁËÒ»¸öµÈÑüÈı½ÇĞÎµÄµ×ÏòÁ¿
+				diffZ = PointCloudOrdered->points[i + 1].z - PointCloudOrdered->points[i].z * depth2 / depth1;// ï¼Ÿï¼Ÿæ„å»ºäº†ä¸€ä¸ªç­‰è…°ä¸‰è§’å½¢çš„åº•å‘é‡
 
-				//depth2¿ÉÒÔÀí½â³É¶¯Ì¬ãĞÖµ£¬Ô½Ô¶ãĞÖµÔ½´ó£»£»ÆäÊµ¾ÍÊÇ¿´¼Ğ½Ç
+				//depth2å¯ä»¥ç†è§£æˆåŠ¨æ€é˜ˆå€¼ï¼Œè¶Šè¿œé˜ˆå€¼è¶Šå¤§ï¼›ï¼›å…¶å®å°±æ˜¯çœ‹å¤¹è§’
 				if (sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ) / depth2 < 0.1) {
-					// ¸ù¾İµÈÑüÈı½ÇĞÎĞÔÖÊ£¬ÕâÒ»ÅĞ¶Ïthreshold=0.1Êµ¼Ê±íÊ¾X[i]ÏòÁ¿ÓëX[i+1]µÄ¼Ğ½ÇĞ¡ÓÚ5.732¶È
-					// cloudNeighborPicked ÊÇ¿¼ÂÇÒ»¸öÌØÕ÷µãÖÜÎ§²»ÄÜÔÙÉèÖÃ³ÉÌØÕ÷Ô¼ÊøµÄÅĞ¶Ï±êÖ¾Î»
+					// æ ¹æ®ç­‰è…°ä¸‰è§’å½¢æ€§è´¨ï¼Œè¿™ä¸€åˆ¤æ–­threshold=0.1å®é™…è¡¨ç¤ºX[i]å‘é‡ä¸X[i+1]çš„å¤¹è§’å°äº5.732åº¦
+					// cloudNeighborPicked æ˜¯è€ƒè™‘ä¸€ä¸ªç‰¹å¾ç‚¹å‘¨å›´ä¸èƒ½å†è®¾ç½®æˆç‰¹å¾çº¦æŸçš„åˆ¤æ–­æ ‡å¿—ä½
 					cloudNeighborPicked[i - 5] = 1;
 					cloudNeighborPicked[i - 4] = 1;
 					cloudNeighborPicked[i - 3] = 1;
@@ -244,8 +244,8 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 				}
 			}
 		}
-		/* Õë¶ÔÂÛÎÄÖĞ(a)Çé¿ö */
-		//xie:È¥³ıÂÛÎÄÀïÌáµ½µÄÏßÌØÕ÷µÄ±ßÔµµã£¬Èç¹ûÒ»¸öµãÊÇ»¥ÏàÕÚµ²¼ä¶Ï´¦µÄµã£¬ÄÇÃ´ËûÖÜÎ§µÄÖÁÉÙ6¸öµã²»ÄÜÒª£¬ÒòÎª¼ÆËãÇúÂÊµÄÊ±ºòÓÃµÄ5¸öµã¡£
+		/* é’ˆå¯¹è®ºæ–‡ä¸­(a)æƒ…å†µ */
+		//xie:å»é™¤è®ºæ–‡é‡Œæåˆ°çš„çº¿ç‰¹å¾çš„è¾¹ç¼˜ç‚¹ï¼Œå¦‚æœä¸€ä¸ªç‚¹æ˜¯äº’ç›¸é®æŒ¡é—´æ–­å¤„çš„ç‚¹ï¼Œé‚£ä¹ˆä»–å‘¨å›´çš„è‡³å°‘6ä¸ªç‚¹ä¸èƒ½è¦ï¼Œå› ä¸ºè®¡ç®—æ›²ç‡çš„æ—¶å€™ç”¨çš„5ä¸ªç‚¹ã€‚
 		float diffX2 = PointCloudOrdered->points[i].x - PointCloudOrdered->points[i - 1].x;
 		float diffY2 = PointCloudOrdered->points[i].y - PointCloudOrdered->points[i - 1].y;
 		float diffZ2 = PointCloudOrdered->points[i].z - PointCloudOrdered->points[i - 1].z;
@@ -255,14 +255,14 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 			+ PointCloudOrdered->points[i].y * PointCloudOrdered->points[i].y
 			+ PointCloudOrdered->points[i].z * PointCloudOrdered->points[i].z;
 		
-		//xie:Èç¹û¾àÀëÁ½±ß¶¼ºÜÔ¶¾ÍÈ¥µôÕâ¸öµã
+		//xie:å¦‚æœè·ç¦»ä¸¤è¾¹éƒ½å¾ˆè¿œå°±å»æ‰è¿™ä¸ªç‚¹
 		if (diff > 0.0002 * dis && diff2 > 0.0002 * dis) {
 			cloudNeighborPicked[i] = 1;
 		}
 		
 	}
 
-	//¿ªÊ¼ÕÒsharp points and flat points
+	//å¼€å§‹æ‰¾sharp points and flat points
 	PointCloud cornerPointsSharp;
 	PointCloud cornerPointsLessSharp;
 	PointCloud surfPointsFlat;
@@ -270,14 +270,14 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 
 	for (int i = 0; i < N_SCANS; i++)
 	{
-		PointCloud::Ptr surfPointsLessFlatScan(new PointCloud);	//less flatµã±È½Ï¶à£¬ĞèÒª½øĞĞvoxelÂË²¨´¦Àí
-		//½«Ã¿Ò»ÏßµÈ¼ä¾à·Ö³É6·İÀ´´¦Àí£» Ã°ÅİÅÅĞòËã·¨£»sp:ÁùµÈ·ÖÆğµã£¬start pointer
+		PointCloud::Ptr surfPointsLessFlatScan(new PointCloud);	//less flatç‚¹æ¯”è¾ƒå¤šï¼Œéœ€è¦è¿›è¡Œvoxelæ»¤æ³¢å¤„ç†
+		//å°†æ¯ä¸€çº¿ç­‰é—´è·åˆ†æˆ6ä»½æ¥å¤„ç†ï¼› å†’æ³¡æ’åºç®—æ³•ï¼›sp:å…­ç­‰åˆ†èµ·ç‚¹ï¼Œstart pointer
 		for (int j = 0; j < 6; j++)
 		{
 			int sp = (scanStartInd[i] * (6 - j) + scanEndInd[i] * j) / 6;	//start point and end point
 			int ep = (scanStartInd[i] * (5 - j) + scanEndInd[i] * (j + 1)) / 6 - 1;
 
-			//¶ÔÒ»ÏßµÄ1/6£¬°´ÇúÂÊÅÅĞò£» ÅÅĞòºóµÄ½á¹û´æ·ÅÔÚcloudSortIndÀïÃæµÄ
+			//å¯¹ä¸€çº¿çš„1/6ï¼ŒæŒ‰æ›²ç‡æ’åºï¼› æ’åºåçš„ç»“æœå­˜æ”¾åœ¨cloudSortIndé‡Œé¢çš„
 			for (int k = sp + 1; k <= ep; k++)
 			{
 				for (int l = k; l >= sp + 1; l--)
@@ -291,24 +291,24 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 				}
 			}
 
-			//ÌôÑ¡Ã¿¸ö·Ö¶ÎµÄÇúÂÊºÜ´óºÍ±È½Ï´óµÄµã
-			int largestPickedNum = 0;	//	ÇúÂÊ½Ï´óÇÒ¿ÉÑ¡µÄµãµÄ¸öÊı
+			//æŒ‘é€‰æ¯ä¸ªåˆ†æ®µçš„æ›²ç‡å¾ˆå¤§å’Œæ¯”è¾ƒå¤§çš„ç‚¹
+			int largestPickedNum = 0;	//	æ›²ç‡è¾ƒå¤§ä¸”å¯é€‰çš„ç‚¹çš„ä¸ªæ•°
 			for (int k = ep; k >= sp; k--)
 			{
 				int ind = cloudSortInd[k];
 				if (cloudNeighborPicked[ind] == 0 && cloudCurvature[ind] > 0.1)
 				{
 					largestPickedNum++;
-					//ÌôÑ¡ÇúÂÊ×î´óµÄÇ°2¸öµã·ÅÈësharpµã¼¯ºÏ
+					//æŒ‘é€‰æ›²ç‡æœ€å¤§çš„å‰2ä¸ªç‚¹æ”¾å…¥sharpç‚¹é›†åˆ
 					if (largestPickedNum <= 2)
 					{
-						cloudLabel[ind] = 2;//2´ú±íµãÇúÂÊºÜ´ó
+						cloudLabel[ind] = 2;//2ä»£è¡¨ç‚¹æ›²ç‡å¾ˆå¤§
 						cornerPointsSharp.push_back(PointCloudOrdered->points[ind]);
 						cornerPointsLessSharp.push_back(PointCloudOrdered->points[ind]);
 					}
 					else if (largestPickedNum <= 20)
 					{
-						cloudLabel[ind] = 1;//1´ú±íµãÇúÂÊ±È½Ï¼âÈñ
+						cloudLabel[ind] = 1;//1ä»£è¡¨ç‚¹æ›²ç‡æ¯”è¾ƒå°–é”
 						cornerPointsLessSharp.push_back(PointCloudOrdered->points[ind]);
 					}
 					else
@@ -316,8 +316,8 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 						break;
 					}
 
-					cloudNeighborPicked[ind] = 1;//É¸Ñ¡±êÖ¾ÖÃÎ»,ÌôÑ¡¹ıÁËÉèÎª1£¬²»ÔÙÌôÑ¡
-					//½«ÇúÂÊ±È½Ï´óµÄµãµÄÇ°ºó¸÷5¸öÁ¬Ğø¾àÀë±È½Ï½üµÄµãÉ¸Ñ¡³öÈ¥£¬·ÀÖ¹ÌØÕ÷µã¾Û¼¯£¬Ê¹µÃÌØÕ÷µãÔÚÃ¿¸ö·½ÏòÉÏ¾¡Á¿·Ö²¼¾ùÔÈ
+					cloudNeighborPicked[ind] = 1;//ç­›é€‰æ ‡å¿—ç½®ä½,æŒ‘é€‰è¿‡äº†è®¾ä¸º1ï¼Œä¸å†æŒ‘é€‰
+					//å°†æ›²ç‡æ¯”è¾ƒå¤§çš„ç‚¹çš„å‰åå„5ä¸ªè¿ç»­è·ç¦»æ¯”è¾ƒè¿‘çš„ç‚¹ç­›é€‰å‡ºå»ï¼Œé˜²æ­¢ç‰¹å¾ç‚¹èšé›†ï¼Œä½¿å¾—ç‰¹å¾ç‚¹åœ¨æ¯ä¸ªæ–¹å‘ä¸Šå°½é‡åˆ†å¸ƒå‡åŒ€
 					for (int l = 1; l <= 5; l++)
 					{
 						float diffX = PointCloudOrdered->points[ind + l].x
@@ -352,26 +352,26 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 				}
 			}
 
-			//ÌôÑ¡Ã¿¸ö·Ö¶ÎµÄÇúÂÊºÜĞ¡±È½ÏĞ¡µÄµã£¬flat points
+			//æŒ‘é€‰æ¯ä¸ªåˆ†æ®µçš„æ›²ç‡å¾ˆå°æ¯”è¾ƒå°çš„ç‚¹ï¼Œflat points
 			int smallestPickedNum = 0;
 			for (int k = sp; k <= ep; k++)
 			{
 				int ind = cloudSortInd[k];
-				//Èç¹ûÇúÂÊµÄÈ·±È½ÏĞ¡£¬²¢ÇÒÎ´±»É¸Ñ¡³ö
+				//å¦‚æœæ›²ç‡çš„ç¡®æ¯”è¾ƒå°ï¼Œå¹¶ä¸”æœªè¢«ç­›é€‰å‡º
 				if (cloudNeighborPicked[ind] == 0 && cloudCurvature[ind] < 0.1)
 				{
 
-					cloudLabel[ind] = -1;//-1´ú±íÇúÂÊºÜĞ¡µÄµã
+					cloudLabel[ind] = -1;//-1ä»£è¡¨æ›²ç‡å¾ˆå°çš„ç‚¹
 					surfPointsFlat.push_back(PointCloudOrdered->points[ind]);
 
 					smallestPickedNum++;
 					if (smallestPickedNum >= 4)
-					{//Ö»Ñ¡×îĞ¡µÄËÄ¸ö£¬Ê£ÏÂµÄLabel==0,¾Í¶¼ÊÇÇúÂÊ±È½ÏĞ¡µÄ
+					{//åªé€‰æœ€å°çš„å››ä¸ªï¼Œå‰©ä¸‹çš„Label==0,å°±éƒ½æ˜¯æ›²ç‡æ¯”è¾ƒå°çš„
 						break;
 					}
 
 					cloudNeighborPicked[ind] = 1;
-					for (int l = 1; l <= 5; l++) //Í¬Ñù·ÀÖ¹ÌØÕ÷µã¾Û¼¯
+					for (int l = 1; l <= 5; l++) //åŒæ ·é˜²æ­¢ç‰¹å¾ç‚¹èšé›†
 					{
 						float diffX = PointCloudOrdered->points[ind + l].x
 							- PointCloudOrdered->points[ind + l - 1].x;
@@ -405,7 +405,7 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 				}
 			}
 
-			//½«Ê£ÓàµÄµã£¨°üÀ¨Ö®Ç°±»ÅÅ³ıµÄµã£©È«²¿¹éÈëÆ½ÃæµãÖĞless flatÀà±ğÖĞ
+			//å°†å‰©ä½™çš„ç‚¹ï¼ˆåŒ…æ‹¬ä¹‹å‰è¢«æ’é™¤çš„ç‚¹ï¼‰å…¨éƒ¨å½’å…¥å¹³é¢ç‚¹ä¸­less flatç±»åˆ«ä¸­
 			for (int k = sp; k <= ep; k++)
 			{
 				if (cloudLabel[k] <= 0)
@@ -415,14 +415,14 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 			}
 		}
 
-		//ÓÉÓÚless flatµã×î¶à£¬¶ÔÃ¿¸ö·Ö¶Îless flatµÄµã½øĞĞÌåËØÕ¤¸ñÂË²¨
+		//ç”±äºless flatç‚¹æœ€å¤šï¼Œå¯¹æ¯ä¸ªåˆ†æ®µless flatçš„ç‚¹è¿›è¡Œä½“ç´ æ …æ ¼æ»¤æ³¢
 		pcl::PointCloud<PointType> surfPointsLessFlatScanDS;
 		pcl::VoxelGrid<PointType> downSizeFilter;
 		downSizeFilter.setInputCloud(surfPointsLessFlatScan);
-		downSizeFilter.setLeafSize(0.2, 0.2, 0.2);	//ÉèÖÃµ¥Î»Õı·½ÌåÎª20cm
+		downSizeFilter.setLeafSize(0.2, 0.2, 0.2);	//è®¾ç½®å•ä½æ­£æ–¹ä½“ä¸º20cm
 		downSizeFilter.filter(surfPointsLessFlatScanDS);
 
-		//less flatµã
+		//less flatç‚¹
 		surfPointsLessFlat += surfPointsLessFlatScanDS;
 
 
@@ -449,11 +449,11 @@ ScanRegistrationBack ScanRegistration::ScanRegistrationHandle(const PointCloud& 
 	ScanBackValue.imuTrans.points[3].z = imuVeloFromStartZCur;
 
 
-	//·µ»ØÖµ
-	//ÌØÊâµã
-	ScanBackValue.cornerPointsLessSharp = cornerPointsLessSharp;	//Ò»°ã¼âÈñµã
-	ScanBackValue.cornerPointsSharp = cornerPointsSharp;			//¸ü¼âÈñµã¡£¡£Ò²¾ÍÊÇ¸Ã¶ÎÄÚ¼âÈñµãµÄ¸öÊı³¬¹ı4Ê±Ê¶±ğµ½µÄ¼âÈñµã´æÈëÕâ¸öÊı×é
-	ScanBackValue.laserCloud = PointCloudOrdered;							//°´Ïß¾ÛÀàÖ®ºóµÄµã¼¯
+	//è¿”å›å€¼
+	//ç‰¹æ®Šç‚¹
+	ScanBackValue.cornerPointsLessSharp = cornerPointsLessSharp;	//ä¸€èˆ¬å°–é”ç‚¹
+	ScanBackValue.cornerPointsSharp = cornerPointsSharp;			//æ›´å°–é”ç‚¹ã€‚ã€‚ä¹Ÿå°±æ˜¯è¯¥æ®µå†…å°–é”ç‚¹çš„ä¸ªæ•°è¶…è¿‡4æ—¶è¯†åˆ«åˆ°çš„å°–é”ç‚¹å­˜å…¥è¿™ä¸ªæ•°ç»„
+	ScanBackValue.laserCloud = PointCloudOrdered;							//æŒ‰çº¿èšç±»ä¹‹åçš„ç‚¹é›†
 	ScanBackValue.surfPointsFlat = surfPointsFlat;
 	ScanBackValue.surfPointsLessFlat = surfPointsLessFlat;
 	return ScanBackValue;

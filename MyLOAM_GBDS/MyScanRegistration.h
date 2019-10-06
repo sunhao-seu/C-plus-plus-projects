@@ -23,32 +23,32 @@ private:
 
 	static const int N_SCANS = 16;		//laser lines
 
-	float cloudCurvature[40000];	//c¡£¡£ÇúÂÊ£¬ÉèÁËÒ»¸öºÜ´óµÄÊı×é£¬40000£» Ó²¼ş²»Ö§³Övector
-	int cloudSortInd[40000];	//¶ÔÃ¿ÌõÏßµÄÇúÂÊÅÅĞòºóµÃµ½µÄĞòÁĞ
-	int cloudNeighborPicked[40000];	//Èç¹ûÄ³Ë÷ÒıÎª1£¬ÄÇÃ´¸ÃË÷Òı¶ÔÓ¦µÄµã²»ÄÜÔÙ±»Ñ¡ÎªÌØÕ÷µãÁË¡£
+	float cloudCurvature[40000];	//cã€‚ã€‚æ›²ç‡ï¼Œè®¾äº†ä¸€ä¸ªå¾ˆå¤§çš„æ•°ç»„ï¼Œ40000ï¼› ç¡¬ä»¶ä¸æ”¯æŒvector
+	int cloudSortInd[40000];	//å¯¹æ¯æ¡çº¿çš„æ›²ç‡æ’åºåå¾—åˆ°çš„åºåˆ—
+	int cloudNeighborPicked[40000];	//å¦‚æœæŸç´¢å¼•ä¸º1ï¼Œé‚£ä¹ˆè¯¥ç´¢å¼•å¯¹åº”çš„ç‚¹ä¸èƒ½å†è¢«é€‰ä¸ºç‰¹å¾ç‚¹äº†ã€‚
 	int cloudNeighborPickedForCorner[40000];
-	int cloudLabel[40000];	//µã·ÖÀà±êºÅ:2-´ú±íÇúÂÊºÜ´ó£¬1-´ú±íÇúÂÊ±È½Ï´ó,-1-´ú±íÇúÂÊºÜĞ¡£¬0-ÇúÂÊ±È½ÏĞ¡(ÆäÖĞ1°üº¬ÁË2,0°üº¬ÁË1,0ºÍ1¹¹³ÉÁËµãÔÆÈ«²¿µÄµã)
+	int cloudLabel[40000];	//ç‚¹åˆ†ç±»æ ‡å·:2-ä»£è¡¨æ›²ç‡å¾ˆå¤§ï¼Œ1-ä»£è¡¨æ›²ç‡æ¯”è¾ƒå¤§,-1-ä»£è¡¨æ›²ç‡å¾ˆå°ï¼Œ0-æ›²ç‡æ¯”è¾ƒå°(å…¶ä¸­1åŒ…å«äº†2,0åŒ…å«äº†1,0å’Œ1æ„æˆäº†ç‚¹äº‘å…¨éƒ¨çš„ç‚¹)
 
-	int imuPointerFront; //lastÊµ¼ÊÉÏÓÃÀ´¼ÇÂ¼µÄÊÇimuhandler´¦ÀíµÄmsgÊ±¼ä´ÁÒÑ¾­µ½ÄÄÁË
-	int imuPointerLast;//frontÓÃÀ´¼ÇÂ¼laserscanhandler´¦ÀíµÄµãÔÆÊ±¼äµ½ÄÄÁË
-	static const int imuQueLength = 200;	//imuÑ­»·¶ÓÁĞ³¤¶È
+	int imuPointerFront; //lastå®é™…ä¸Šç”¨æ¥è®°å½•çš„æ˜¯imuhandlerå¤„ç†çš„msgæ—¶é—´æˆ³å·²ç»åˆ°å“ªäº†
+	int imuPointerLast;//frontç”¨æ¥è®°å½•laserscanhandlerå¤„ç†çš„ç‚¹äº‘æ—¶é—´åˆ°å“ªäº†
+	static const int imuQueLength = 200;	//imuå¾ªç¯é˜Ÿåˆ—é•¿åº¦
 
-											//µãÔÆÊı¾İ¿ªÊ¼µÚÒ»¸öµãµÄÎ»ÒÆ/ËÙ¶È/Å·À­½Ç
+											//ç‚¹äº‘æ•°æ®å¼€å§‹ç¬¬ä¸€ä¸ªç‚¹çš„ä½ç§»/é€Ÿåº¦/æ¬§æ‹‰è§’
 	float imuRollStart, imuPitchStart, imuYawStart;
 	float imuRollCur, imuPitchCur, imuYawCur;
 
 	float imuVeloXStart, imuVeloYStart, imuVeloZStart;
 	float imuShiftXStart, imuShiftYStart, imuShiftZStart;
 
-	//µ±Ç°µãµÄËÙ¶È£¬Î»ÒÆĞÅÏ¢
+	//å½“å‰ç‚¹çš„é€Ÿåº¦ï¼Œä½ç§»ä¿¡æ¯
 	float imuVeloXCur, imuVeloYCur, imuVeloZCur;
 	float imuShiftXCur, imuShiftYCur, imuShiftZCur;
 
-	//Ã¿´ÎµãÔÆÊı¾İµ±Ç°µãÏà¶ÔÓÚ¿ªÊ¼µÚÒ»¸öµãµÄ»û±äÎ»ÒÆ£¬ËÙ¶È
+	//æ¯æ¬¡ç‚¹äº‘æ•°æ®å½“å‰ç‚¹ç›¸å¯¹äºå¼€å§‹ç¬¬ä¸€ä¸ªç‚¹çš„ç•¸å˜ä½ç§»ï¼Œé€Ÿåº¦
 	float imuShiftFromStartXCur, imuShiftFromStartYCur, imuShiftFromStartZCur;
 	float imuVeloFromStartXCur, imuVeloFromStartYCur, imuVeloFromStartZCur;
 
-	//IMUĞÅÏ¢
+	//IMUä¿¡æ¯
 	double imuTime[imuQueLength];
 	float imuRoll[imuQueLength];
 	float imuPitch[imuQueLength];

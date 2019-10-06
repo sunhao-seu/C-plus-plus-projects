@@ -28,11 +28,11 @@ public:
 
 private:
 
-	//ÓÃÓÚÊäÈëgroundtruthµÄ±äÁ¿
+	//ç”¨äºè¾“å…¥groundtruthçš„å˜é‡
 	//double **groundtruth;
 
 	//
-	//ÓÃÓÚ´æ´¢µ±Ç°RANSACµÄÆ½Ãæ·¨ÏòÁ¿ºÍÇ°Ò»Ö¡µÄÆ½Ãæ·¨ÏòÁ¿
+	//ç”¨äºå­˜å‚¨å½“å‰RANSACçš„å¹³é¢æ³•å‘é‡å’Œå‰ä¸€å¸§çš„å¹³é¢æ³•å‘é‡
 	//Eigen::VectorXf planeParBef;
 	//Eigen::VectorXf planeParTobe;
 
@@ -46,10 +46,10 @@ private:
 	bool systemInit;
 	static const float scanPeriod/*=0.1*/;
 
-	static const int stackFrameNum = 1;		//³£Öµ //¿ØÖÆ½ÓÊÕµ½µÄµãÔÆÊı¾İ£¬Ã¿¸ô¼¸Ö¡´¦ÀíÒ»´Î
-	static const int mapFrameNum = 1;		//³£Öµ //¿ØÖÆ´¦ÀíµÃµ½µÄµãÔÆmap£¬Ã¿¸ô¼¸´Îpublich¸ørvizÏÔÊ¾
+	static const int stackFrameNum = 1;		//å¸¸å€¼ //æ§åˆ¶æ¥æ”¶åˆ°çš„ç‚¹äº‘æ•°æ®ï¼Œæ¯éš”å‡ å¸§å¤„ç†ä¸€æ¬¡
+	static const int mapFrameNum = 1;		//å¸¸å€¼ //æ§åˆ¶å¤„ç†å¾—åˆ°çš„ç‚¹äº‘mapï¼Œæ¯éš”å‡ æ¬¡publichç»™rvizæ˜¾ç¤º
 
-	//Ê±¼ä´Á
+	//æ—¶é—´æˆ³
 	//double timeLaserCloudCornerLast;
 	//double timeLaserCloudSurfLast;
 	//double timeLaserCloudFullRes;
@@ -60,51 +60,51 @@ private:
 	bool newLaserCloudFullRes;
 	bool newLaserOdometry;
 
-	int laserCloudCenWidth;			 //cubeÖĞĞÄµã¶ÔÓ¦µÄË÷Òı£¬»áËæ×ÅÎ»ÖÃµÄÒÆ¶¯±ä»¯
-	int laserCloudCenHeight;		 //cubeÖĞĞÄµã¶ÔÓ¦µÄË÷Òı£¬»áËæ×ÅÎ»ÖÃµÄÒÆ¶¯±ä»¯
-	int laserCloudCenDepth;			 //cubeÖĞĞÄµã¶ÔÓ¦µÄË÷Òı£¬»áËæ×ÅÎ»ÖÃµÄÒÆ¶¯±ä»¯
-	static const int laserCloudWidth = 21; // ×ÓcubeÑØ¿í·½ÏòµÄ·Ö¸î¸öÊı //cubeµÄÊıÁ¿£¬²»±äµÄ
-	static const int laserCloudHeight = 11;  // ¸ß·½Ïò¸öÊı
-	static const int laserCloudDepth = 21;  // Éî¶È·½Ïò¸öÊı
-	static const int laserCloudNum = laserCloudWidth * laserCloudHeight * laserCloudDepth;  // ×Ócube×ÜÊı£»Ò²¾ÍÊÇÓÃÁË4851¸öcubeÀ´ÃèÊöÀ×´ïµÄÊı¾İ£¿µ«ÊÇÀ×´ïÊı¾İÔõÃ´¸úcube¶Ô½ÓµÄ£¿
+	int laserCloudCenWidth;			 //cubeä¸­å¿ƒç‚¹å¯¹åº”çš„ç´¢å¼•ï¼Œä¼šéšç€ä½ç½®çš„ç§»åŠ¨å˜åŒ–
+	int laserCloudCenHeight;		 //cubeä¸­å¿ƒç‚¹å¯¹åº”çš„ç´¢å¼•ï¼Œä¼šéšç€ä½ç½®çš„ç§»åŠ¨å˜åŒ–
+	int laserCloudCenDepth;			 //cubeä¸­å¿ƒç‚¹å¯¹åº”çš„ç´¢å¼•ï¼Œä¼šéšç€ä½ç½®çš„ç§»åŠ¨å˜åŒ–
+	static const int laserCloudWidth = 21; // å­cubeæ²¿å®½æ–¹å‘çš„åˆ†å‰²ä¸ªæ•° //cubeçš„æ•°é‡ï¼Œä¸å˜çš„
+	static const int laserCloudHeight = 11;  // é«˜æ–¹å‘ä¸ªæ•°
+	static const int laserCloudDepth = 21;  // æ·±åº¦æ–¹å‘ä¸ªæ•°
+	static const int laserCloudNum = laserCloudWidth * laserCloudHeight * laserCloudDepth;  // å­cubeæ€»æ•°ï¼›ä¹Ÿå°±æ˜¯ç”¨äº†4851ä¸ªcubeæ¥æè¿°é›·è¾¾çš„æ•°æ®ï¼Ÿä½†æ˜¯é›·è¾¾æ•°æ®æ€ä¹ˆè·Ÿcubeå¯¹æ¥çš„ï¼Ÿ
 
-	int laserCloudValidInd[125];//lidarÊÓÓò·¶Î§ÄÚ(FOV)µÄµãÔÆ¼¯Ë÷Òı
-	int laserCloudSurroundInd[125];//lidarÖÜÎ§µÄµãÔÆ¼¯Ë÷Òı
+	int laserCloudValidInd[125];//lidarè§†åŸŸèŒƒå›´å†…(FOV)çš„ç‚¹äº‘é›†ç´¢å¼•
+	int laserCloudSurroundInd[125];//lidarå‘¨å›´çš„ç‚¹äº‘é›†ç´¢å¼•
 
 	int frameCount;
 	int mapFrameCount;
-	pcl::PointCloud<PointType>::Ptr laserCloudCornerLast;		//odometry·µ»ØÖµ¡£¡£//×îĞÂ½ÓÊÕµ½µÄ±ßÑØµã
-	pcl::PointCloud<PointType>::Ptr laserCloudSurfLast;			//odometry·µ»ØÖµ¡£¡£//×îĞÂ½ÓÊÕµ½µÄÆ½Ãæµã
-	pcl::PointCloud<PointType>::Ptr laserCloudCornerStack;		//laserCloudCornerStack2 ¾­¹ıvoxel filterºóµÄµã¼¯//´æ·Åµ±Ç°ÊÕµ½µÄÏÂ²ÉÑùÖ®ºóµÄ±ßÑØµã(in the local frame)
-	pcl::PointCloud<PointType>::Ptr laserCloudSurfStack;		//laserCloudSurfStack2 ¾­¹ıvoxel filterºóµÄµã¼¯//´æ·Åµ±Ç°ÊÕµ½µÄÏÂ²ÉÑùÖ®ºóµÄÆ½Ãæµã(in the local frame)
-	pcl::PointCloud<PointType>::Ptr laserCloudCornerStack2;		//×ª»»µ½µØÍ¼×ø±êÏµÏÂµÄµ±Ç°Ö¡µÄ½Çµã //´æ·Åµ±Ç°ÊÕµ½µÄ±ßÑØµã£¬×÷ÎªÏÂ²ÉÑùµÄÊı¾İÔ´
-	pcl::PointCloud<PointType>::Ptr laserCloudSurfStack2;		//×ª»»µ½µØÍ¼×ø±êÏµÏÂµÄµ±Ç°Ö¡µÄÆ½Ãæµã//´æ·Åµ±Ç°ÊÕµ½µÄÆ½Ãæµã£¬×÷ÎªÏÂ²ÉÑùµÄÊı¾İÔ´
-	pcl::PointCloud<PointType>::Ptr laserCloudOri;			//Ô­Ê¼µãÔÆ×ø±ê
+	pcl::PointCloud<PointType>::Ptr laserCloudCornerLast;		//odometryè¿”å›å€¼ã€‚ã€‚//æœ€æ–°æ¥æ”¶åˆ°çš„è¾¹æ²¿ç‚¹
+	pcl::PointCloud<PointType>::Ptr laserCloudSurfLast;			//odometryè¿”å›å€¼ã€‚ã€‚//æœ€æ–°æ¥æ”¶åˆ°çš„å¹³é¢ç‚¹
+	pcl::PointCloud<PointType>::Ptr laserCloudCornerStack;		//laserCloudCornerStack2 ç»è¿‡voxel filteråçš„ç‚¹é›†//å­˜æ”¾å½“å‰æ”¶åˆ°çš„ä¸‹é‡‡æ ·ä¹‹åçš„è¾¹æ²¿ç‚¹(in the local frame)
+	pcl::PointCloud<PointType>::Ptr laserCloudSurfStack;		//laserCloudSurfStack2 ç»è¿‡voxel filteråçš„ç‚¹é›†//å­˜æ”¾å½“å‰æ”¶åˆ°çš„ä¸‹é‡‡æ ·ä¹‹åçš„å¹³é¢ç‚¹(in the local frame)
+	pcl::PointCloud<PointType>::Ptr laserCloudCornerStack2;		//è½¬æ¢åˆ°åœ°å›¾åæ ‡ç³»ä¸‹çš„å½“å‰å¸§çš„è§’ç‚¹ //å­˜æ”¾å½“å‰æ”¶åˆ°çš„è¾¹æ²¿ç‚¹ï¼Œä½œä¸ºä¸‹é‡‡æ ·çš„æ•°æ®æº
+	pcl::PointCloud<PointType>::Ptr laserCloudSurfStack2;		//è½¬æ¢åˆ°åœ°å›¾åæ ‡ç³»ä¸‹çš„å½“å‰å¸§çš„å¹³é¢ç‚¹//å­˜æ”¾å½“å‰æ”¶åˆ°çš„å¹³é¢ç‚¹ï¼Œä½œä¸ºä¸‹é‡‡æ ·çš„æ•°æ®æº
+	pcl::PointCloud<PointType>::Ptr laserCloudOri;			//åŸå§‹ç‚¹äº‘åæ ‡
 	pcl::PointCloud<PointType>::Ptr coeffSel;
-	pcl::PointCloud<PointType>::Ptr laserCloudSurround;//Æ¥ÅäÊ¹ÓÃµÄÌØÕ÷µã£¨ÏÂ²ÉÑùÖ®ºóµÄ£©
-	pcl::PointCloud<PointType>::Ptr laserCloudSurround2;//Æ¥ÅäÊ¹ÓÃµÄÌØÕ÷µã£¨ÏÂ²ÉÑùÖ®Ç°µÄ£©
-	pcl::PointCloud<PointType>::Ptr laserCloudCornerFromMap;//mapÖĞÌáÈ¡µÄÆ¥ÅäÊ¹ÓÃµÄ±ßÑØµã
-	pcl::PointCloud<PointType>::Ptr laserCloudSurfFromMap;//mapÖĞÌáÈ¡µÄÆ¥ÅäÊ¹ÓÃµÄÆ½Ãæµã
-	pcl::PointCloud<PointType>::Ptr laserCloudFullRes;					//odometry·µ»ØÖµ¡£¡£µãÔÆÊı¾İ//µãÔÆÈ«²¿µã
-	//cube½ÇµãÊı×é;width*height*depth   //array¶¼ÊÇÒÔ50Ã×Îªµ¥Î»µÄÁ¢·½ÌåµØÍ¼£¬ÔËĞĞ¹ı³ÌÖĞ»áÒ»Ö±±£´æ(ÓĞĞèÒªµÄ»°¿É¿¼ÂÇÓÅ»¯£¬Ö»±£´æ½üÁÚµÄ£¬»òÕßÖ±½ÓÊı×é¿ªĞ¡Ò»µã)
-	//Õâ¸öarrayÊÇÒ»¸ö³ß´çÎªlaserCloudNumµÄÊı×é£¬laserCloudCornerArray[i]´æ·Å×ÅÒ»¸ö´ócube,Ò»¸ö´ócube °üº¬ºÜ¶àµã£¿
-	pcl::PointCloud<PointType>::Ptr laserCloudCornerArray[laserCloudNum];  //´æ·Å±ßÑØµãµÄcube¡£¡£ÆäÊµ¾ÍÊÇ½«Ò»¸ö·¶Î§ÄÚµÄµãvoxel»¯ÁË¡£½«cubeÀí½â³Éµã¾Í¿ÉÒÔÁË£¬Ò»¸öcube¶ÔÓ¦Ò»¸öµã
-	pcl::PointCloud<PointType>::Ptr laserCloudSurfArray[laserCloudNum];//´æ·ÅÆ½ÃæµãµÄcube£» 
-	pcl::PointCloud<PointType>::Ptr laserCloudCornerArray2[laserCloudNum];//ÖĞ¼ä±äÁ¿£¬´æ·ÅÏÂ²ÉÑù¹ıµÄ±ßÑØµã
-	pcl::PointCloud<PointType>::Ptr laserCloudSurfArray2[laserCloudNum];//ÖĞ¼ä±äÁ¿£¬´æ·ÅÏÂ²ÉÑù¹ıµÄÆ½Ãæµã
+	pcl::PointCloud<PointType>::Ptr laserCloudSurround;//åŒ¹é…ä½¿ç”¨çš„ç‰¹å¾ç‚¹ï¼ˆä¸‹é‡‡æ ·ä¹‹åçš„ï¼‰
+	pcl::PointCloud<PointType>::Ptr laserCloudSurround2;//åŒ¹é…ä½¿ç”¨çš„ç‰¹å¾ç‚¹ï¼ˆä¸‹é‡‡æ ·ä¹‹å‰çš„ï¼‰
+	pcl::PointCloud<PointType>::Ptr laserCloudCornerFromMap;//mapä¸­æå–çš„åŒ¹é…ä½¿ç”¨çš„è¾¹æ²¿ç‚¹
+	pcl::PointCloud<PointType>::Ptr laserCloudSurfFromMap;//mapä¸­æå–çš„åŒ¹é…ä½¿ç”¨çš„å¹³é¢ç‚¹
+	pcl::PointCloud<PointType>::Ptr laserCloudFullRes;					//odometryè¿”å›å€¼ã€‚ã€‚ç‚¹äº‘æ•°æ®//ç‚¹äº‘å…¨éƒ¨ç‚¹
+	//cubeè§’ç‚¹æ•°ç»„;width*height*depth   //arrayéƒ½æ˜¯ä»¥50ç±³ä¸ºå•ä½çš„ç«‹æ–¹ä½“åœ°å›¾ï¼Œè¿è¡Œè¿‡ç¨‹ä¸­ä¼šä¸€ç›´ä¿å­˜(æœ‰éœ€è¦çš„è¯å¯è€ƒè™‘ä¼˜åŒ–ï¼Œåªä¿å­˜è¿‘é‚»çš„ï¼Œæˆ–è€…ç›´æ¥æ•°ç»„å¼€å°ä¸€ç‚¹)
+	//è¿™ä¸ªarrayæ˜¯ä¸€ä¸ªå°ºå¯¸ä¸ºlaserCloudNumçš„æ•°ç»„ï¼ŒlaserCloudCornerArray[i]å­˜æ”¾ç€ä¸€ä¸ªå¤§cube,ä¸€ä¸ªå¤§cube åŒ…å«å¾ˆå¤šç‚¹ï¼Ÿ
+	pcl::PointCloud<PointType>::Ptr laserCloudCornerArray[laserCloudNum];  //å­˜æ”¾è¾¹æ²¿ç‚¹çš„cubeã€‚ã€‚å…¶å®å°±æ˜¯å°†ä¸€ä¸ªèŒƒå›´å†…çš„ç‚¹voxelåŒ–äº†ã€‚å°†cubeç†è§£æˆç‚¹å°±å¯ä»¥äº†ï¼Œä¸€ä¸ªcubeå¯¹åº”ä¸€ä¸ªç‚¹
+	pcl::PointCloud<PointType>::Ptr laserCloudSurfArray[laserCloudNum];//å­˜æ”¾å¹³é¢ç‚¹çš„cubeï¼› 
+	pcl::PointCloud<PointType>::Ptr laserCloudCornerArray2[laserCloudNum];//ä¸­é—´å˜é‡ï¼Œå­˜æ”¾ä¸‹é‡‡æ ·è¿‡çš„è¾¹æ²¿ç‚¹
+	pcl::PointCloud<PointType>::Ptr laserCloudSurfArray2[laserCloudNum];//ä¸­é—´å˜é‡ï¼Œå­˜æ”¾ä¸‹é‡‡æ ·è¿‡çš„å¹³é¢ç‚¹
 
-	/*************¸ßÆµ×ª»»Á¿**************/
-	//odometry¼ÆËãµÃµ½µÄµ½ÊÀ½ç×ø±êÏµÏÂµÄ×ªÒÆ¾ØÕó
-	Twist transformSum;					//odometry·µ»ØÖµ¡£¡£ÉÏÒ»Ö¡µÄ×ª»»¾ØÕó£¬È«¾Ö×ø±êÏµÖĞ
-	//×ªÒÆÔöÁ¿£¬Ö»Ê¹ÓÃÁËºóÈı¸öÆ½ÒÆÔöÁ¿
-	Twist transformIncre;				//Ç°Ò»Ö¡À×´ïÎ»×Ë¼õÀÛ¼ÆÎ»×Ë£¬µÃµ½µ±Ç°Ö¡À×´ïÔÚÈ«¾ÖµØÍ¼ÖĞµÄÎ»×Ë£»¡¾x,y,z¡¿
+	/*************é«˜é¢‘è½¬æ¢é‡**************/
+	//odometryè®¡ç®—å¾—åˆ°çš„åˆ°ä¸–ç•Œåæ ‡ç³»ä¸‹çš„è½¬ç§»çŸ©é˜µ
+	Twist transformSum;					//odometryè¿”å›å€¼ã€‚ã€‚ä¸Šä¸€å¸§çš„è½¬æ¢çŸ©é˜µï¼Œå…¨å±€åæ ‡ç³»ä¸­
+	//è½¬ç§»å¢é‡ï¼Œåªä½¿ç”¨äº†åä¸‰ä¸ªå¹³ç§»å¢é‡
+	Twist transformIncre;				//å‰ä¸€å¸§é›·è¾¾ä½å§¿å‡ç´¯è®¡ä½å§¿ï¼Œå¾—åˆ°å½“å‰å¸§é›·è¾¾åœ¨å…¨å±€åœ°å›¾ä¸­çš„ä½å§¿ï¼›ã€x,y,zã€‘
 	
-	/*************µÍÆµ×ª»»Á¿*************/
-	//2ÒÔÆğÊ¼Î»ÖÃÎªÔ­µãµÄÊÀ½ç×ø±êÏµÏÂµÄ×ª»»¾ØÕó£¨²Â²âÓëµ÷ÕûµÄ¶ÔÏó£©
-	Twist transformTobeMapped;			//µ±Ç°Ö¡ÔÚÒÑÓĞµØÍ¼ÖĞµÄ¾ø¶ÔÎ»×Ë¡¾x,y,z,rot_x,rot_y,rot_z¡¿,Ò²¾ÍÊÇ¿ÉÒÔÖ±½ÓÄÃÀ´mapÁË
-	//2´æ·ÅmappingÖ®Ç°µÄOdometry¼ÆËãµÄÊÀ½ç×ø±êÏµµÄ×ª»»¾ØÕó£¨×¢£ºµÍÆµÁ¿£¬²»Ò»¶¨ÓëtransformSumÒ»Ñù£©
-	Twist transformBefMapped;			//transformBefMapped£ºÇ°Ò»Ö¡»òÕßËµÉÏÒ»´ÎµØÍ¼ÖĞÀ×´ïµÄÎ»×Ë£»£»´Ë´¦Ïà¼õ£¬µÃµ½µ±Ç°Ö¡À×´ïÔÚÈ«¾ÖµØÍ¼ÖĞµÄÎ»×Ë
-	//2´æ·ÅmappingÖ®ºóµÄ¾­¹ımappingÎ¢µ÷Ö®ºóµÄ×ª»»¾ØÕó
+	/*************ä½é¢‘è½¬æ¢é‡*************/
+	//2ä»¥èµ·å§‹ä½ç½®ä¸ºåŸç‚¹çš„ä¸–ç•Œåæ ‡ç³»ä¸‹çš„è½¬æ¢çŸ©é˜µï¼ˆçŒœæµ‹ä¸è°ƒæ•´çš„å¯¹è±¡ï¼‰
+	Twist transformTobeMapped;			//å½“å‰å¸§åœ¨å·²æœ‰åœ°å›¾ä¸­çš„ç»å¯¹ä½å§¿ã€x,y,z,rot_x,rot_y,rot_zã€‘,ä¹Ÿå°±æ˜¯å¯ä»¥ç›´æ¥æ‹¿æ¥mapäº†
+	//2å­˜æ”¾mappingä¹‹å‰çš„Odometryè®¡ç®—çš„ä¸–ç•Œåæ ‡ç³»çš„è½¬æ¢çŸ©é˜µï¼ˆæ³¨ï¼šä½é¢‘é‡ï¼Œä¸ä¸€å®šä¸transformSumä¸€æ ·ï¼‰
+	Twist transformBefMapped;			//transformBefMappedï¼šå‰ä¸€å¸§æˆ–è€…è¯´ä¸Šä¸€æ¬¡åœ°å›¾ä¸­é›·è¾¾çš„ä½å§¿ï¼›ï¼›æ­¤å¤„ç›¸å‡ï¼Œå¾—åˆ°å½“å‰å¸§é›·è¾¾åœ¨å…¨å±€åœ°å›¾ä¸­çš„ä½å§¿
+	//2å­˜æ”¾mappingä¹‹åçš„ç»è¿‡mappingå¾®è°ƒä¹‹åçš„è½¬æ¢çŸ©é˜µ
 	Twist transformAftMapped;			
 
 
@@ -127,8 +127,9 @@ private:
 	int biggest_Map = 0;
 	int biggest_Local = 0;
 
-	clock_t time1, time2, time3, time4;
-	double time_last1,time_last2,time_last3;
+	clock_t time1, time2, time3, time4, time_start,time_end;
+	double time_last1,time_last2,time_last3,time_last_compare;
+	std::vector<double> time_store;
 
 
 	//my knn parameters

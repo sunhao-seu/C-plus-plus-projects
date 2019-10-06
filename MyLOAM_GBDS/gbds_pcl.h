@@ -3,9 +3,9 @@
 #include <iostream>
 #include <vector>
 
-// Eigen ²¿·Ö
+// Eigen éƒ¨åˆ†
 #include <Eigen/Core>
-// ³íÃÜ¾ØÕóµÄ´úÊıÔËËã£¨Äæ£¬ÌØÕ÷ÖµµÈ£©
+// ç¨ å¯†çŸ©é˜µçš„ä»£æ•°è¿ç®—ï¼ˆé€†ï¼Œç‰¹å¾å€¼ç­‰ï¼‰
 #include <Eigen/Dense>
 
 #include <Eigen/Eigen>
@@ -25,7 +25,7 @@ const int k_sub_region_max = 64000;	//40*40*40
 const int k_search_near_regions_max = 1000;	//
 const int k_nearest_number_max = 10;	//10
 const int k_query_set_size = 10;
-const int k_search_times = 5;
+const int k_search_times = 3;		//when points in searching sub-spaces are bigger than k_search_times*k, then do search. 
 const int k_split_precise = 2;		//the split precise, unit: m;
 
 //template<typename type_point>
@@ -101,7 +101,7 @@ void SplitSubSpacePrecise(const int data_set_size, const struct MaxMin data_max_
 *  @param data_set_size: the array size of struct array.(the useful data)
 *  @param x_split_array: split array of x axis. from x_min to x_max
 *  @param split_array_size: the size of split array..contains x_split_size, y_split_size, z_split_size
-*  @param sub_sets: the sub-spaces set contains the index of dataset.   [ÊÇ·ñĞèÒªÖØĞÂ´æ´¢£¬ÒÔÁ¬Ğø¶ÁÈ¡Êı¾İ¶ø²»ÊÇËæ»ú¶ÁÈ¡]
+*  @param sub_sets: the sub-spaces set contains the index of dataset.   [æ˜¯å¦éœ€è¦é‡æ–°å­˜å‚¨ï¼Œä»¥è¿ç»­è¯»å–æ•°æ®è€Œä¸æ˜¯éšæœºè¯»å–]
 *  @param sub_sets_size: the size of the second dimension of sub_sets..
 *  @return Void.
 */

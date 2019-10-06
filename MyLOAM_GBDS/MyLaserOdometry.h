@@ -25,28 +25,28 @@ private:
 
 	static const float scanPeriod /*= 0.1*/;
 
-	static const int skipFrameNum = 0;	//½ö´Ó×ÖÃæÒâË¼ÉÏÀí½â£¬Ó¦¸ÃÊÇÌø¹ıµÄÖ¡Êı£»£»¸ô¶àÉÙÖ¡´¦ÀíÒ»´Î
-	bool systemInited;					//ÏµÍ³³õÊ¼»¯±êÖ¾Î»
+	static const int skipFrameNum = 0;	//ä»…ä»å­—é¢æ„æ€ä¸Šç†è§£ï¼Œåº”è¯¥æ˜¯è·³è¿‡çš„å¸§æ•°ï¼›ï¼›éš”å¤šå°‘å¸§å¤„ç†ä¸€æ¬¡
+	bool systemInited;					//ç³»ç»Ÿåˆå§‹åŒ–æ ‡å¿—ä½
 
-	bool newCornerPointsSharp;		//Ò»¶Ñ±êÖ¾Î»£¬ÅĞ¶ÏĞÂÊı¾İÊÇ·ñÒÑ¾­½øÀ´ÁË¡£
+	bool newCornerPointsSharp;		//ä¸€å †æ ‡å¿—ä½ï¼Œåˆ¤æ–­æ–°æ•°æ®æ˜¯å¦å·²ç»è¿›æ¥äº†ã€‚
 	bool newCornerPointsLessSharp;
 	bool newSurfPointsFlat;
 	bool newSurfPointsLessFlat;
 	bool newLaserCloudFullRes;
 	bool newImuTrans;
 
-	pcl::PointCloud<PointType>::Ptr cornerPointsSharp;		//´ÓRegistrationvalue¸´ÖÆ¹ıÀ´µÄsharp point//¼âÈñµãÔÆ£»sharp  Ò»¶ÑµãÔÆÀàĞÍÖ¸Õë£» µ±Ç°Ö¡µÄ½ÇµãµãÔÆ
-	pcl::PointCloud<PointType>::Ptr cornerPointsLessSharp;	//´ÓRegistrationvalue¸´ÖÆ¹ıÀ´µÄlesssharp point
+	pcl::PointCloud<PointType>::Ptr cornerPointsSharp;		//ä»Registrationvalueå¤åˆ¶è¿‡æ¥çš„sharp point//å°–é”ç‚¹äº‘ï¼›sharp  ä¸€å †ç‚¹äº‘ç±»å‹æŒ‡é’ˆï¼› å½“å‰å¸§çš„è§’ç‚¹ç‚¹äº‘
+	pcl::PointCloud<PointType>::Ptr cornerPointsLessSharp;	//ä»Registrationvalueå¤åˆ¶è¿‡æ¥çš„lesssharp point
 	pcl::PointCloud<PointType>::Ptr surfPointsFlat;
 	pcl::PointCloud<PointType>::Ptr surfPointsLessFlat;
-	pcl::PointCloud<PointType>::Ptr laserCloudCornerLast;	//½ÇµãµãÔÆ£¬ corner,  ÉÏÒ»Ö¡µÄ
+	pcl::PointCloud<PointType>::Ptr laserCloudCornerLast;	//è§’ç‚¹ç‚¹äº‘ï¼Œ corner,  ä¸Šä¸€å¸§çš„
 	pcl::PointCloud<PointType>::Ptr laserCloudSurfLast;
-	pcl::PointCloud<PointType>::Ptr laserCloudOri;			//´æ´¢µ±Ç°Ö¡ÌØÕ÷µãÓëÉÏÒ»Ö¡Æ¥ÅäÉÏµÄÌØÕ÷µã£»£»£»Ò²¾ÍÊÇÃ»Æ¥ÅäÉÏ¾Í²»´æÈëÕâÀï¡£
-	pcl::PointCloud<PointType>::Ptr coeffSel;				//´æ´¢de,dhµÄÆ«µ¼ĞÅÏ¢£¬ÓÃÓÚÖ®ºó¹¹½¨jacobian¾ØÕó²¢½âËã¡££» OriÊÇ¶ÔÓ¦µÄµã¼¯¡£
-	pcl::PointCloud<PointType>::Ptr laserCloudFullRes;		//lasercloud£¬¾ÍÊÇRegistrationÀïÃæ°´Ïß·ÖºÃµÄµã¼¯
+	pcl::PointCloud<PointType>::Ptr laserCloudOri;			//å­˜å‚¨å½“å‰å¸§ç‰¹å¾ç‚¹ä¸ä¸Šä¸€å¸§åŒ¹é…ä¸Šçš„ç‰¹å¾ç‚¹ï¼›ï¼›ï¼›ä¹Ÿå°±æ˜¯æ²¡åŒ¹é…ä¸Šå°±ä¸å­˜å…¥è¿™é‡Œã€‚
+	pcl::PointCloud<PointType>::Ptr coeffSel;				//å­˜å‚¨de,dhçš„åå¯¼ä¿¡æ¯ï¼Œç”¨äºä¹‹åæ„å»ºjacobiançŸ©é˜µå¹¶è§£ç®—ã€‚ï¼› Oriæ˜¯å¯¹åº”çš„ç‚¹é›†ã€‚
+	pcl::PointCloud<PointType>::Ptr laserCloudFullRes;		//lasercloudï¼Œå°±æ˜¯Registrationé‡Œé¢æŒ‰çº¿åˆ†å¥½çš„ç‚¹é›†
 	pcl::PointCloud<pcl::PointXYZ>::Ptr imuTrans;
-	pcl::KdTreeFLANN<PointType>::Ptr kdtreeCornerLast;		//´æ´¢ÉÏÒ»Ö¡µÄ½ÇµãĞÅÏ¢µÄkdtree
-	pcl::KdTreeFLANN<PointType>::Ptr kdtreeSurfLast;		//´æ´¢ÉÏÒ»Ö¡µÄÆ½ÃæµãĞÅÏ¢µÄkdtree
+	pcl::KdTreeFLANN<PointType>::Ptr kdtreeCornerLast;		//å­˜å‚¨ä¸Šä¸€å¸§çš„è§’ç‚¹ä¿¡æ¯çš„kdtree
+	pcl::KdTreeFLANN<PointType>::Ptr kdtreeSurfLast;		//å­˜å‚¨ä¸Šä¸€å¸§çš„å¹³é¢ç‚¹ä¿¡æ¯çš„kdtree
 
 	int laserCloudCornerLastNum;
 	int laserCloudSurfLastNum;
@@ -61,14 +61,14 @@ private:
 	float pointSearchSurfInd3[40000];
 
 	//imu
-	Twist transform;		////µ±Ç°Ö¡Ïà¶ÔÉÏÒ»Ö¡µÄ×´Ì¬×ªÒÆÁ¿£¬in the local frame
-	Twist transformSum;		//×ÜµÄ×ª»» µ±Ç°Ö¡Ïà¶ÔÓÚµÚÒ»Ö¡µÄ×´Ì¬×ªÒÆÁ¿£¬in the global frame
+	Twist transform;		////å½“å‰å¸§ç›¸å¯¹ä¸Šä¸€å¸§çš„çŠ¶æ€è½¬ç§»é‡ï¼Œin the local frame
+	Twist transformSum;		//æ€»çš„è½¬æ¢ å½“å‰å¸§ç›¸å¯¹äºç¬¬ä¸€å¸§çš„çŠ¶æ€è½¬ç§»é‡ï¼Œin the global frame
 	Angle imuRollStart, imuPitchStart, imuYawStart;
 	Angle imuRollLast, imuPitchLast, imuYawLast;
 	Vector3 imuShiftFromStart;
 	Vector3 imuVeloFromStart;
 
-	void TransformToStart(PointType const * const pi, PointType * const po);	//½«µ±Ç°Ö¡µÄµãÔÆÊ±¼ä´Á¶¼×ªÒÆµ½³õÊ¼Ê±¿Ìstart
+	void TransformToStart(PointType const * const pi, PointType * const po);	//å°†å½“å‰å¸§çš„ç‚¹äº‘æ—¶é—´æˆ³éƒ½è½¬ç§»åˆ°åˆå§‹æ—¶åˆ»start
 	void AccumulateRotation(Angle cx, Angle cy, Angle cz, Angle lx, Angle ly, Angle lz, Angle &ox, Angle &oy, Angle &oz);
 	void PluginIMURotation(const Angle& bcx, const Angle& bcy, const Angle& bcz,
 		const Angle& blx, const Angle& bly, const Angle& blz,

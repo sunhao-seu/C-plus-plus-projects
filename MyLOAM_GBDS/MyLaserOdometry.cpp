@@ -26,15 +26,15 @@ kdtreeSurfLast(new pcl::KdTreeFLANN<PointType>())
 
 void LaserOdometry::TransformToStart(PointType const * const pi, PointType * const po)
 {
-	//²åÖµÏµÊı¼ÆËã£¬ÔÆÖĞÃ¿¸öµãµÄÏà¶ÔÊ±¼ä/µãÔÆÖÜÆÚ10
-	float s = 10 * (pi->intensity - int(pi->intensity));//£¿£¿ÕâÀïµÄ10ÆäÊµÊÇ¸ú0.1¶ÔÓ¦µÄ£¬¶ø²»ÊÇµ¥´¿µÄÎªÁËÇóÊ®·ÖÎ»µÄÊı
+	//æ’å€¼ç³»æ•°è®¡ç®—ï¼Œäº‘ä¸­æ¯ä¸ªç‚¹çš„ç›¸å¯¹æ—¶é—´/ç‚¹äº‘å‘¨æœŸ10
+	float s = 10 * (pi->intensity - int(pi->intensity));//ï¼Ÿï¼Ÿè¿™é‡Œçš„10å…¶å®æ˜¯è·Ÿ0.1å¯¹åº”çš„ï¼Œè€Œä¸æ˜¯å•çº¯çš„ä¸ºäº†æ±‚ååˆ†ä½çš„æ•°
 
-	//ÏßĞÔ²åÖµ£º¸ù¾İÃ¿¸öµãÔÚµãÔÆÖĞµÄÏà¶ÔÎ»ÖÃ¹ØÏµ£¬³ËÒÔÏàÓ¦µÄĞı×ªÆ½ÒÆÏµÊı
+	//çº¿æ€§æ’å€¼ï¼šæ ¹æ®æ¯ä¸ªç‚¹åœ¨ç‚¹äº‘ä¸­çš„ç›¸å¯¹ä½ç½®å…³ç³»ï¼Œä¹˜ä»¥ç›¸åº”çš„æ—‹è½¬å¹³ç§»ç³»æ•°
 	Angle rx = s * transform.rot_x.value();
 	Angle ry = s * transform.rot_y.value();
 	Angle rz = s * transform.rot_z.value();
 
-	//¼õÈ¥Î»ÒÆ£¬ÔÙÈÆz,x,yĞı×ª£» Ğı×ª±íÊ¾ÎªY1X2Z3
+	//å‡å»ä½ç§»ï¼Œå†ç»•z,x,yæ—‹è½¬ï¼› æ—‹è½¬è¡¨ç¤ºä¸ºY1X2Z3
 	Vector3 v0(Vector3(*pi) - s * transform.pos);
 	Vector3 v1 = rotateZ(v0, -rz);
 	Vector3 v2 = rotateX(v1, -rx);
@@ -218,7 +218,7 @@ void LaserOdometry::laserCloudFullResHandler(const pcl::PointCloud<PointType>::P
 
 void LaserOdometry::imuTransHandler(const pcl::PointCloud<pcl::PointXYZ>& imuTrans2)
 {
-	// ¸úimuÓĞ¹ØµÄ²Ù×÷£¬£¬ÓÉregister·µ»ØµÄ£¬´Ë´úÂëÃ»ÓĞÓÃµ½Imu¡£¡£
+	// è·Ÿimuæœ‰å…³çš„æ“ä½œï¼Œï¼Œç”±registerè¿”å›çš„ï¼Œæ­¤ä»£ç æ²¡æœ‰ç”¨åˆ°Imuã€‚ã€‚
 
 	imuTrans->clear();
 	*imuTrans = imuTrans2;
@@ -247,7 +247,7 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 {
 	LaserOdometryBack OdometryValueBack;
 
-	//¾ÍÊÇÈ¡Öµ²Ù×÷£¬½«Registration·µ»ØµÄÖµ¸´ÖÆµ½±¾µØµÄÊı×éÖĞ£¬£¬»¹ÊÇÖ¸Õë£¿
+	//å°±æ˜¯å–å€¼æ“ä½œï¼Œå°†Registrationè¿”å›çš„å€¼å¤åˆ¶åˆ°æœ¬åœ°çš„æ•°ç»„ä¸­ï¼Œï¼Œè¿˜æ˜¯æŒ‡é’ˆï¼Ÿ
 	laserCloudSharpHandler(ScanValueBack.cornerPointsSharp);
 	laserCloudLessSharpHandler(ScanValueBack.cornerPointsLessSharp);
 	laserCloudFlatHandler(ScanValueBack.surfPointsFlat);
@@ -256,21 +256,21 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 	imuTransHandler(ScanValueBack.imuTrans);
 
 
-	PointType pointSel;	//µ±Ç°Ö¡µÄÌØÕ÷µã¼¯ÖĞÈ¡³öÒ»¸öµã
-	PointType tripod1, tripod2, tripod3;	//×î½üµãÓë´ÎÁÚ½üµã; ´Î´Î¶ÔÓ¦µã£¨ÃæĞèÒªÈı¸öµã£©
-	PointType pointProj;	//´æ´¢Æ«µ¼ĞÅÏ¢£¬jacobian..²»¶Ô£¬Õâ¸ö´æ´¢µÄÊÇpointSel¼õÈ¥Æ«µ¼
-	PointType coeff; // Ã¿¸öÌØÕ÷µã¶ÔÓ¦µÄJaccobian¾ØÕóµÄÈı¸öÔªËØ¶¼±£´æÔÚcoeffSelÖĞ£¬ºóÃæ²ÉÓÃL - M·½·¨½âËãµÄÊ±ºòÖ±½Óµ÷ÓÃ¾ÍĞĞÁË¡£
-	PointType pointOri;	//¹¹½¨L-M¾ØÕóÊ±Ê¹ÓÃ£¬ÕıÔÚ´¦ÀíµÄµã
+	PointType pointSel;	//å½“å‰å¸§çš„ç‰¹å¾ç‚¹é›†ä¸­å–å‡ºä¸€ä¸ªç‚¹
+	PointType tripod1, tripod2, tripod3;	//æœ€è¿‘ç‚¹ä¸æ¬¡é‚»è¿‘ç‚¹; æ¬¡æ¬¡å¯¹åº”ç‚¹ï¼ˆé¢éœ€è¦ä¸‰ä¸ªç‚¹ï¼‰
+	PointType pointProj;	//å­˜å‚¨åå¯¼ä¿¡æ¯ï¼Œjacobian..ä¸å¯¹ï¼Œè¿™ä¸ªå­˜å‚¨çš„æ˜¯pointSelå‡å»åå¯¼
+	PointType coeff; // æ¯ä¸ªç‰¹å¾ç‚¹å¯¹åº”çš„JaccobiançŸ©é˜µçš„ä¸‰ä¸ªå…ƒç´ éƒ½ä¿å­˜åœ¨coeffSelä¸­ï¼Œåé¢é‡‡ç”¨L - Mæ–¹æ³•è§£ç®—çš„æ—¶å€™ç›´æ¥è°ƒç”¨å°±è¡Œäº†ã€‚
+	PointType pointOri;	//æ„å»ºL-MçŸ©é˜µæ—¶ä½¿ç”¨ï¼Œæ­£åœ¨å¤„ç†çš„ç‚¹
 
-	bool isDegenerate = false;	//ÅĞ¶ÏÊÇ·ñ·¢ÉúÍË»¯
-	Eigen::Matrix<float, 6, 6> matP;	//Ô¤²â¾ØÕóP£¬ÍË»¯Ê±Ê¹ÓÃ
-	int frameCount = skipFrameNum;		//¸ô¶àÉÙÖ¡´¦ÀíÒ»´Î¡£¡£ÕâÀïÃ¿Ö¡¶¼´¦Àí
+	bool isDegenerate = false;	//åˆ¤æ–­æ˜¯å¦å‘ç”Ÿé€€åŒ–
+	Eigen::Matrix<float, 6, 6> matP;	//é¢„æµ‹çŸ©é˜µPï¼Œé€€åŒ–æ—¶ä½¿ç”¨
+	int frameCount = skipFrameNum;		//éš”å¤šå°‘å¸§å¤„ç†ä¸€æ¬¡ã€‚ã€‚è¿™é‡Œæ¯å¸§éƒ½å¤„ç†
 
-	std::vector<int> pointSearchInd;		//×îÁÚ½üËÑË÷µÄ×î½üµã
-	std::vector<float> pointSearchSqDis;    //×îÁÚ½üËÑË÷µÄ×î½üµãµ½¸ÃµãµÄ¾àÀë
+	std::vector<int> pointSearchInd;		//æœ€é‚»è¿‘æœç´¢çš„æœ€è¿‘ç‚¹
+	std::vector<float> pointSearchSqDis;    //æœ€é‚»è¿‘æœç´¢çš„æœ€è¿‘ç‚¹åˆ°è¯¥ç‚¹çš„è·ç¦»
 
 
-	//Í¬²½×÷ÓÃ£¬È·±£Í¬Ê±ÊÕµ½Í¬Ò»¸öµãÔÆµÄÌØÕ÷µãÒÔ¼°IMUĞÅÏ¢²Å½øÈë
+	//åŒæ­¥ä½œç”¨ï¼Œç¡®ä¿åŒæ—¶æ”¶åˆ°åŒä¸€ä¸ªç‚¹äº‘çš„ç‰¹å¾ç‚¹ä»¥åŠIMUä¿¡æ¯æ‰è¿›å…¥
 	if (newCornerPointsSharp && newCornerPointsLessSharp && newSurfPointsFlat &&
 		newSurfPointsLessFlat && newLaserCloudFullRes && newImuTrans)
 	{
@@ -281,10 +281,10 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 		newLaserCloudFullRes = false;
 		newImuTrans = false;
 
-		//¶ÔµÚÒ»Ö¡×ö³õÊ¼»¯¹¤×÷£¬¸³¸ølaserCloudCornerLast¡£¡£
+		//å¯¹ç¬¬ä¸€å¸§åšåˆå§‹åŒ–å·¥ä½œï¼Œèµ‹ç»™laserCloudCornerLastã€‚ã€‚
 		if (!systemInited)
 		{
-			//registrationÖĞµÄlesssharpÔÚÕâÀï¶¼´æÈëcornerlastÀïÃæ£¬¹¹½¨kdÊ÷
+			//registrationä¸­çš„lesssharpåœ¨è¿™é‡Œéƒ½å­˜å…¥cornerlasté‡Œé¢ï¼Œæ„å»ºkdæ ‘
 			pcl::PointCloud<PointType>::Ptr laserCloudTemp = cornerPointsLessSharp;
 			cornerPointsLessSharp = laserCloudCornerLast;
 			laserCloudCornerLast = laserCloudTemp;
@@ -358,34 +358,34 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 
 		//transform.pos -= imuVeloFromStart * scanPeriod;
 
-		//Ö»ÓĞÌØÕ÷µãµÄ¸öÊı×ã¹»²ÅÄÜ¹»½øĞĞºóÃæµÄÆ¥Åä¹¤×÷£¬²»¹»µÄ»°¾Í²»Ëã£¬¹Ø¼üÖ¡µÄ¸ÅÄî
+		//åªæœ‰ç‰¹å¾ç‚¹çš„ä¸ªæ•°è¶³å¤Ÿæ‰èƒ½å¤Ÿè¿›è¡Œåé¢çš„åŒ¹é…å·¥ä½œï¼Œä¸å¤Ÿçš„è¯å°±ä¸ç®—ï¼Œå…³é”®å¸§çš„æ¦‚å¿µ
 		if (laserCloudCornerLastNum > 10 && laserCloudSurfLastNum > 100)
 		{
 			std::vector<int> indices;
-			pcl::removeNaNFromPointCloud(*cornerPointsSharp, *cornerPointsSharp, indices); // ÌŞ³ıÒì³£µã
-			int cornerPointsSharpNum = cornerPointsSharp->points.size(); // µ±Ç°Ê±¿ÌÌØÕ÷½ÇµãµÄ¸öÊı
-			int surfPointsFlatNum = surfPointsFlat->points.size(); // µ±Ç°Ê±¿ÌÌØÕ÷Æ½Ì¹µãµÄ¸öÊı
+			pcl::removeNaNFromPointCloud(*cornerPointsSharp, *cornerPointsSharp, indices); // å‰”é™¤å¼‚å¸¸ç‚¹
+			int cornerPointsSharpNum = cornerPointsSharp->points.size(); // å½“å‰æ—¶åˆ»ç‰¹å¾è§’ç‚¹çš„ä¸ªæ•°
+			int surfPointsFlatNum = surfPointsFlat->points.size(); // å½“å‰æ—¶åˆ»ç‰¹å¾å¹³å¦ç‚¹çš„ä¸ªæ•°
 
-			//µü´ú´ÎÊıÎª25´Î£¬ÒÔ±£Ö¤ÔËËãĞ§ÂÊ
-			//1£º¶ÔÌØÕ÷±ß / ÃæÉÏµÄµã½øĞĞ´¦Àí£¬2£º¹¹½¨Jaccobian¾ØÕó£¬3£ºL - MÔË¶¯¹À¼ÆÇó½â¡£
-			//L-M·½·¨ÆäÊµ¾ÍÊÇ·ÇÏßĞÔ×îĞ¡¶ş³Ë£¬ÊÇGauss-NewtonÓÅ»¯µÄÒ»ÖÖ¸Ä½ø£¨Ôö¼ÓÁËÒ»¸ö×èÄáÒò×Ó£¬´úÂëÖĞµÄs£©£¬ËùÒÔ¹Ø¼üÔÚÓÚÈçºÎ°ÑµãÔÆÅä×¼ºÍÔË¶¯¹À¼ÆµÄÎÊÌâ×ª»»ÎªL-MÓÅ»¯Çó½âµÄÎÊÌâ¡£
-			//Ö÷ÒªË¼Â·¾ÍÊÇ£º¹¹½¨Ô¼Êø·½³Ì -> Ô¼Êø·½³ÌÇóÆ«µ¼¹¹½¨Jaccobian¾ØÕó -> L-MÇó½â¡£
+			//è¿­ä»£æ¬¡æ•°ä¸º25æ¬¡ï¼Œä»¥ä¿è¯è¿ç®—æ•ˆç‡
+			//1ï¼šå¯¹ç‰¹å¾è¾¹ / é¢ä¸Šçš„ç‚¹è¿›è¡Œå¤„ç†ï¼Œ2ï¼šæ„å»ºJaccobiançŸ©é˜µï¼Œ3ï¼šL - Mè¿åŠ¨ä¼°è®¡æ±‚è§£ã€‚
+			//L-Mæ–¹æ³•å…¶å®å°±æ˜¯éçº¿æ€§æœ€å°äºŒä¹˜ï¼Œæ˜¯Gauss-Newtonä¼˜åŒ–çš„ä¸€ç§æ”¹è¿›ï¼ˆå¢åŠ äº†ä¸€ä¸ªé˜»å°¼å› å­ï¼Œä»£ç ä¸­çš„sï¼‰ï¼Œæ‰€ä»¥å…³é”®åœ¨äºå¦‚ä½•æŠŠç‚¹äº‘é…å‡†å’Œè¿åŠ¨ä¼°è®¡çš„é—®é¢˜è½¬æ¢ä¸ºL-Mä¼˜åŒ–æ±‚è§£çš„é—®é¢˜ã€‚
+			//ä¸»è¦æ€è·¯å°±æ˜¯ï¼šæ„å»ºçº¦æŸæ–¹ç¨‹ -> çº¦æŸæ–¹ç¨‹æ±‚åå¯¼æ„å»ºJaccobiançŸ©é˜µ -> L-Mæ±‚è§£ã€‚
 			for (int iterCount = 0; iterCount < 25; iterCount++)
 			{
 
-				//process corner points; figure7(a)    cycle number: 36»òÕß1
+				//process corner points; figure7(a)    cycle number: 36æˆ–è€…1
 				for (int i = 0; i < cornerPointsSharpNum; i++)
 				{
-					//Ã¿´Îµü´úºó£¬µÃµ½µÄÔöÁ¿¼Óµ½×ÜµÄ×ª»»transformÖĞ£¬È»ºóÏÂÒ»´Îµü´úÓÃĞÂµÄ×ª»»ºóµÄÊı¾İÀ´¼ÆËã
-					TransformToStart(&cornerPointsSharp->points[i], &pointSel);		//½«½Çµã×ª»»µ½µãÔÆ³õÊ¼Ê±¿Ì£»¶økdÊ÷ÀïÃæ´æ´¢µÄÊÇÉÏÒ»Ö¡µÄ×îÖÕÊ±¿Ì£¬Ò²¾ÍÊÇÕâ¸öÊ±¿ÌµÄµãÔÆÊı¾İ¡£pointSelÎª×ª»»ºóµã
+					//æ¯æ¬¡è¿­ä»£åï¼Œå¾—åˆ°çš„å¢é‡åŠ åˆ°æ€»çš„è½¬æ¢transformä¸­ï¼Œç„¶åä¸‹ä¸€æ¬¡è¿­ä»£ç”¨æ–°çš„è½¬æ¢åçš„æ•°æ®æ¥è®¡ç®—
+					TransformToStart(&cornerPointsSharp->points[i], &pointSel);		//å°†è§’ç‚¹è½¬æ¢åˆ°ç‚¹äº‘åˆå§‹æ—¶åˆ»ï¼›è€Œkdæ ‘é‡Œé¢å­˜å‚¨çš„æ˜¯ä¸Šä¸€å¸§çš„æœ€ç»ˆæ—¶åˆ»ï¼Œä¹Ÿå°±æ˜¯è¿™ä¸ªæ—¶åˆ»çš„ç‚¹äº‘æ•°æ®ã€‚pointSelä¸ºè½¬æ¢åç‚¹
 
-					//Ã¿µü´úÎå´Î£¬ÖØĞÂ²éÕÒ×î½üµã
+					//æ¯è¿­ä»£äº”æ¬¡ï¼Œé‡æ–°æŸ¥æ‰¾æœ€è¿‘ç‚¹
 					if (iterCount % 5 == 0)
 					{
 						std::vector<int> indices;
 						
 						pcl::removeNaNFromPointCloud(*laserCloudCornerLast, *laserCloudCornerLast, indices);
-						//kd-tree²éÕÒÒ»¸ö×î½ü¾àÀëµã£¬±ßÑØµãÎ´¾­¹ıÌåËØÕ¤¸ñÂË²¨£¬Ò»°ã±ßÑØµã±¾À´¾Í±È½ÏÉÙ£¬²»×öÂË²¨
+						//kd-treeæŸ¥æ‰¾ä¸€ä¸ªæœ€è¿‘è·ç¦»ç‚¹ï¼Œè¾¹æ²¿ç‚¹æœªç»è¿‡ä½“ç´ æ …æ ¼æ»¤æ³¢ï¼Œä¸€èˆ¬è¾¹æ²¿ç‚¹æœ¬æ¥å°±æ¯”è¾ƒå°‘ï¼Œä¸åšæ»¤æ³¢
 						time3 = clock();
 						kdtreeCornerLast->nearestKSearch(pointSel, 1, pointSearchInd, pointSearchSqDis);
 
@@ -425,17 +425,17 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 /*********************************************************************************/
 						int closestPointInd = -1, minPointInd2 = -1;
 
-						//¾àÀëĞ¡ÓÚ25²ÅÈÏÎªÊÇÓĞĞ§µÄ×îÁÚ½üµã
+						//è·ç¦»å°äº25æ‰è®¤ä¸ºæ˜¯æœ‰æ•ˆçš„æœ€é‚»è¿‘ç‚¹
 						if (pointSearchSqDis[0] < 25)
 						{
 							closestPointInd = pointSearchInd[0];
-							int closestPointScan = int(laserCloudCornerLast->points[closestPointInd].intensity); // ËÑË÷µ½µÄµãjËùÔÚÏßÊı
+							int closestPointScan = int(laserCloudCornerLast->points[closestPointInd].intensity); // æœç´¢åˆ°çš„ç‚¹jæ‰€åœ¨çº¿æ•°
 
 							float pointSqDis, minPointSqDis2 = 25;
-							//ÔÚÉÏÒ»Ö¡ÏòºóÕÒ´ÎÁÚ½üµã£»SCAN²îÖµ³¬¹ı2.5µÄÖ±½ÓÌø¹ı£» ½á¹û´æÈëminPointSqDis2 and minPointInd2ÖĞ
+							//åœ¨ä¸Šä¸€å¸§å‘åæ‰¾æ¬¡é‚»è¿‘ç‚¹ï¼›SCANå·®å€¼è¶…è¿‡2.5çš„ç›´æ¥è·³è¿‡ï¼› ç»“æœå­˜å…¥minPointSqDis2 and minPointInd2ä¸­
 							for (int j = closestPointInd + 1; j < cornerPointsSharpNum; j++)
 							{
-								//SCAN²îÖµ³¬¹ı2.5µÄÖ±½ÓÌø¹ı
+								//SCANå·®å€¼è¶…è¿‡2.5çš„ç›´æ¥è·³è¿‡
 								if (int(laserCloudCornerLast->points[j].intensity) > closestPointScan + 2.5)
 								{
 									break;
@@ -457,7 +457,7 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 								}
 							}
 
-							//ÏòÇ°ÕÒ´ÎÁÚ½üµã£»SCAN²îÖµ³¬¹ı2.5µÄÖ±½ÓÌø¹ı
+							//å‘å‰æ‰¾æ¬¡é‚»è¿‘ç‚¹ï¼›SCANå·®å€¼è¶…è¿‡2.5çš„ç›´æ¥è·³è¿‡
 							for (int j = closestPointInd - 1; j >= 0; j--)
 							{
 								if (int(laserCloudCornerLast->points[j].intensity) < closestPointScan - 2.5)
@@ -483,19 +483,19 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 							}
 
 						}
-						pointSearchCornerInd1[i] = closestPointInd;  // µ±Ç°ËùÓĞ±ßÌØÕ÷µãÔÚÉÏÒ»Ê±¿Ì±ßÌØÕ÷µãÔÆÖĞ¶ÔÓ¦µÄ×îÁÚ½üµãµÄË÷Òı
-						pointSearchCornerInd2[i] = minPointInd2;  // µ±Ç°ËùÓĞ±ßÌØÕ÷µãÔÚÉÏÒ»Ê±¿Ì±ßÌØÕ÷µãÔÆÖĞ¶ÔÓ¦µÄ´ÎÁÚ½üµãµÄË÷Òı
+						pointSearchCornerInd1[i] = closestPointInd;  // å½“å‰æ‰€æœ‰è¾¹ç‰¹å¾ç‚¹åœ¨ä¸Šä¸€æ—¶åˆ»è¾¹ç‰¹å¾ç‚¹äº‘ä¸­å¯¹åº”çš„æœ€é‚»è¿‘ç‚¹çš„ç´¢å¼•
+						pointSearchCornerInd2[i] = minPointInd2;  // å½“å‰æ‰€æœ‰è¾¹ç‰¹å¾ç‚¹åœ¨ä¸Šä¸€æ—¶åˆ»è¾¹ç‰¹å¾ç‚¹äº‘ä¸­å¯¹åº”çš„æ¬¡é‚»è¿‘ç‚¹çš„ç´¢å¼•
 
 					}
 
-					if (pointSearchCornerInd2[i] >= 0)//´óÓÚµÈÓÚ0£¬ËµÃ÷Á½¸öµã¶¼ÕÒµ½ÁË£»Ä¬ÈÏÎª-1
+					if (pointSearchCornerInd2[i] >= 0)//å¤§äºç­‰äº0ï¼Œè¯´æ˜ä¸¤ä¸ªç‚¹éƒ½æ‰¾åˆ°äº†ï¼›é»˜è®¤ä¸º-1
 					{
-						//¹«Ê½2£¬Çóµãµ½Ïß¾àÀë
+						//å…¬å¼2ï¼Œæ±‚ç‚¹åˆ°çº¿è·ç¦»
 						//pointSel-->i   tripod1-->j	tripod2-->l
 						tripod1 = laserCloudCornerLast->points[pointSearchCornerInd1[i]];
 						tripod2 = laserCloudCornerLast->points[pointSearchCornerInd2[i]];
 
-						// Ñ¡ÔñµÄÌØÕ÷µã¼ÇÎªO£¬kd - tree×î½ü¾àÀëµã¼ÇÎªA£¬ÁíÒ»¸ö×î½ü¾àÀëµã¼ÇÎªB
+						// é€‰æ‹©çš„ç‰¹å¾ç‚¹è®°ä¸ºOï¼Œkd - treeæœ€è¿‘è·ç¦»ç‚¹è®°ä¸ºAï¼Œå¦ä¸€ä¸ªæœ€è¿‘è·ç¦»ç‚¹è®°ä¸ºB
 						float x0 = pointSel.x;
 						float y0 = pointSel.y;
 						float z0 = pointSel.z;
@@ -505,13 +505,13 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 						float x2 = tripod2.x;
 						float y2 = tripod2.y;
 						float z2 = tripod2.z;
-						//a012=|(pointSel - tripod1) cross (pointSel - tripod2)|	cross ±íÊ¾²æ³Ë  ¹«Ê½£¨2£©
-						//ÏòÁ¿OA = (x0 - x1, y0 - y1, z0 - z1), ÏòÁ¿OB = (x0 - x2, y0 - y2, z0 - z2)£¬ÏòÁ¿AB = £¨x1 - x2, y1 - y2, z1 - z2£©
-						//ÏòÁ¿OA OBµÄÏòÁ¿»ı(¼´²æ³Ë)Îª£º
+						//a012=|(pointSel - tripod1) cross (pointSel - tripod2)|	cross è¡¨ç¤ºå‰ä¹˜  å…¬å¼ï¼ˆ2ï¼‰
+						//å‘é‡OA = (x0 - x1, y0 - y1, z0 - z1), å‘é‡OB = (x0 - x2, y0 - y2, z0 - z2)ï¼Œå‘é‡AB = ï¼ˆx1 - x2, y1 - y2, z1 - z2ï¼‰
+						//å‘é‡OA OBçš„å‘é‡ç§¯(å³å‰ä¹˜)ä¸ºï¼š
 						//|  i      j      k  |
 						//|x0-x1  y0-y1  z0-z1|
 						//|x0-x2  y0-y2  z0-z2|
-						//Ä£Îª£º
+						//æ¨¡ä¸ºï¼š
 						float a012 = sqrt(((x0 - x1)*(y0 - y2) - (x0 - x2)*(y0 - y1))
 							* ((x0 - x1)*(y0 - y2) - (x0 - x2)*(y0 - y1))
 							+ ((x0 - x1)*(z0 - z2) - (x0 - x2)*(z0 - z1))
@@ -521,23 +521,23 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 						//l12=distance of tripod1 and tripod2
 						float l12 = sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2) + (z1 - z2)*(z1 - z2));
 
-						// ÏòÁ¿[la£»lb£»lc] Îª¾àÀëld2·Ö±ğ¶Ôx0 y0 z0µÄÆ«µ¼,Ò²¾ÍÊÇµ±Ç°µãi  Jacobian matrix ×îÖÕÒªtransformµÄÆ«µ¼
-						//AB·½ÏòµÄµ¥Î»ÏòÁ¿ÓëOABÆ½ÃæµÄµ¥Î»·¨ÏòÁ¿µÄÏòÁ¿»ıÔÚ¸÷ÖáÉÏµÄ·ÖÁ¿£¨dµÄ·½Ïò£©
-						//xÖá·ÖÁ¿i
-						//sh: la¾ÍÊÇld2¶Ôx0µÄÇóµ¼£»lbÊÇld2¶Ôy0µÄÇóµ¼£»£»´Ë´¦µÄÇóµ¼´øÈë
+						// å‘é‡[laï¼›lbï¼›lc] ä¸ºè·ç¦»ld2åˆ†åˆ«å¯¹x0 y0 z0çš„åå¯¼,ä¹Ÿå°±æ˜¯å½“å‰ç‚¹i  Jacobian matrix æœ€ç»ˆè¦transformçš„åå¯¼
+						//ABæ–¹å‘çš„å•ä½å‘é‡ä¸OABå¹³é¢çš„å•ä½æ³•å‘é‡çš„å‘é‡ç§¯åœ¨å„è½´ä¸Šçš„åˆ†é‡ï¼ˆdçš„æ–¹å‘ï¼‰
+						//xè½´åˆ†é‡i
+						//sh: laå°±æ˜¯ld2å¯¹x0çš„æ±‚å¯¼ï¼›lbæ˜¯ld2å¯¹y0çš„æ±‚å¯¼ï¼›ï¼›æ­¤å¤„çš„æ±‚å¯¼å¸¦å…¥
 						float la = ((y1 - y2)*((x0 - x1)*(y0 - y2) - (x0 - x2)*(y0 - y1))
 							+ (z1 - z2)*((x0 - x1)*(z0 - z2) - (x0 - x2)*(z0 - z1))) / a012 / l12;
 
-						//yÖá·ÖÁ¿j
+						//yè½´åˆ†é‡j
 						float lb = -((x1 - x2)*((x0 - x1)*(y0 - y2) - (x0 - x2)*(y0 - y1))
 							- (z1 - z2)*((y0 - y1)*(z0 - z2) - (y0 - y2)*(z0 - z1))) / a012 / l12;
 
-						//zÖá·ÖÁ¿k
+						//zè½´åˆ†é‡k
 						float lc = -((x1 - x2)*((x0 - x1)*(z0 - z2) - (x0 - x2)*(z0 - z1))
 							+ (y1 - y2)*((y0 - y1)*(z0 - z2) - (y0 - y2)*(z0 - z1))) / a012 / l12;
 
-						//µãµ½ÏßµÄ¾àÀë£¬d = |ÏòÁ¿OA ²æ³Ë ÏòÁ¿OB|/|AB|
-						float ld2 = a012 / l12;		//¿Õ¼äÖĞµãµ½Ö±ÏßµÄ¾àÀë£¬¾ÍÊÇÂÛÎÄÖĞµÄde
+						//ç‚¹åˆ°çº¿çš„è·ç¦»ï¼Œd = |å‘é‡OA å‰ä¹˜ å‘é‡OB|/|AB|
+						float ld2 = a012 / l12;		//ç©ºé—´ä¸­ç‚¹åˆ°ç›´çº¿çš„è·ç¦»ï¼Œå°±æ˜¯è®ºæ–‡ä¸­çš„de
 
 						//unused
 						pointProj = pointSel;
@@ -545,33 +545,33 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 						pointProj.y -= lb * ld2;
 						pointProj.z -= lc * ld2;
 
-						//È¨ÖØ¼ÆËã£¬¾àÀëÔ½´óÈ¨ÖØÔ½Ğ¡£¬¾àÀëÔ½Ğ¡È¨ÖØÔ½´ó£¬µÃµ½µÄÈ¨ÖØ·¶Î§<=1
-						float  s = 1;	//´«ËµÖĞµÄ×èÄáÒò×Ó,È¡1Ó¦¸ÃÊÇÒ»¿ªÊ¼Ã»ÓĞÈ¨ÖØ
+						//æƒé‡è®¡ç®—ï¼Œè·ç¦»è¶Šå¤§æƒé‡è¶Šå°ï¼Œè·ç¦»è¶Šå°æƒé‡è¶Šå¤§ï¼Œå¾—åˆ°çš„æƒé‡èŒƒå›´<=1
+						float  s = 1;	//ä¼ è¯´ä¸­çš„é˜»å°¼å› å­,å–1åº”è¯¥æ˜¯ä¸€å¼€å§‹æ²¡æœ‰æƒé‡
 						if (iterCount >= 5)
 						{
-							//5´Îµü´úÖ®ºó¿ªÊ¼Ôö¼ÓÈ¨ÖØÒòËØ
-							s = 1 - 1.8 * fabs(ld2);  // µãµ½Ö±Ïß¾àÀëÔ½Ğ¡×èÄáÒò×ÓÔ½´ó
+							//5æ¬¡è¿­ä»£ä¹‹åå¼€å§‹å¢åŠ æƒé‡å› ç´ 
+							s = 1 - 1.8 * fabs(ld2);  // ç‚¹åˆ°ç›´çº¿è·ç¦»è¶Šå°é˜»å°¼å› å­è¶Šå¤§
 						}
 						coeff.x = s * la;
 						coeff.y = s * lb;
 						coeff.z = s * lc;
 						coeff.intensity = s * ld2;
 
-						// £¿£¿Âú×ããĞÖµ(ld2 < 0.5)£¬½«ÌØÕ÷µã²åÈë
+						// ï¼Ÿï¼Ÿæ»¡è¶³é˜ˆå€¼(ld2 < 0.5)ï¼Œå°†ç‰¹å¾ç‚¹æ’å…¥
 						if (s > 0.1 && ld2 != 0)
 						{
 							laserCloudOri->push_back(cornerPointsSharp->points[i]);
-							coeffSel->push_back(coeff); //Ã¿¸öÌØÕ÷µã¶ÔÓ¦µÄJaccobian¾ØÕóµÄÈı¸öÔªËØ¶¼±£´æÔÚcoeffSelÖĞ£¬ºóÃæ²ÉÓÃL - M·½·¨½âËãµÄÊ±ºòÖ±½Óµ÷ÓÃ¾ÍĞĞÁË¡£
+							coeffSel->push_back(coeff); //æ¯ä¸ªç‰¹å¾ç‚¹å¯¹åº”çš„JaccobiançŸ©é˜µçš„ä¸‰ä¸ªå…ƒç´ éƒ½ä¿å­˜åœ¨coeffSelä¸­ï¼Œåé¢é‡‡ç”¨L - Mæ–¹æ³•è§£ç®—çš„æ—¶å€™ç›´æ¥è°ƒç”¨å°±è¡Œäº†ã€‚
 						}
 
 					}
 				}
 
-				//process palanr points; figure7(b)    cycle number: 202»òÕß2
+				//process palanr points; figure7(b)    cycle number: 202æˆ–è€…2
 				for (int i = 0; i < surfPointsFlatNum; i++)
 				{
 					TransformToStart(&surfPointsFlat->points[i], &pointSel);
-					//Ã¿5´Îµü´úÖØĞÂÕÒÒ»´Î×îÁÚ½üµã
+					//æ¯5æ¬¡è¿­ä»£é‡æ–°æ‰¾ä¸€æ¬¡æœ€é‚»è¿‘ç‚¹
 					if (iterCount % 5 == 0)
 					{
 						kdtreeSurfLast->nearestKSearch(pointSel, 1, pointSearchInd, pointSearchSqDis);
@@ -584,7 +584,7 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 
 							float pointSqDis, minPointSqDis2 = 25, minPointSqDis3 = 25;
 
-							//ÏòºóÕÒ
+							//å‘åæ‰¾
 							for (int j = closestPointInd + 1; j < surfPointsFlatNum; j++)
 							{
 								if (int(laserCloudSurfLast->points[j].intensity) > closestPointScan + 2.5)
@@ -616,7 +616,7 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 									}
 								}
 							}
-							//ÏòÇ°ÕÒ
+							//å‘å‰æ‰¾
 							for (int j = closestPointInd - 1; j >= 0; j--)
 							{
 								if (int(laserCloudSurfLast->points[j].intensity) < closestPointScan - 2.5)
@@ -658,31 +658,31 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 
 					if (pointSearchSurfInd2[i] >= 0 && pointSearchSurfInd3[i] >= 0)
 					{
-						tripod1 = laserCloudSurfLast->points[pointSearchSurfInd1[i]]; //Aµã
-						tripod2 = laserCloudSurfLast->points[pointSearchSurfInd2[i]]; //Bµã
-						tripod3 = laserCloudSurfLast->points[pointSearchSurfInd3[i]]; //Cµã
+						tripod1 = laserCloudSurfLast->points[pointSearchSurfInd1[i]]; //Aç‚¹
+						tripod2 = laserCloudSurfLast->points[pointSearchSurfInd2[i]]; //Bç‚¹
+						tripod3 = laserCloudSurfLast->points[pointSearchSurfInd3[i]]; //Cç‚¹
 
-						//pa pb pc  // ÏòÁ¿[pa£»pb£»pc] = µãµ½ÃæµÄ¾àÀë¶Ôx0 y0 z0µÄÆ«µ¼
-						//ÏòÁ¿AB ACµÄÏòÁ¿»ı£¨¼´²æ³Ë£©£¬µÃµ½µÄÊÇ·¨ÏòÁ¿
-						//xÖá·½Ïò·ÖÏòÁ¿i
+						//pa pb pc  // å‘é‡[paï¼›pbï¼›pc] = ç‚¹åˆ°é¢çš„è·ç¦»å¯¹x0 y0 z0çš„åå¯¼
+						//å‘é‡AB ACçš„å‘é‡ç§¯ï¼ˆå³å‰ä¹˜ï¼‰ï¼Œå¾—åˆ°çš„æ˜¯æ³•å‘é‡
+						//xè½´æ–¹å‘åˆ†å‘é‡i
 						float pa = (tripod2.y - tripod1.y) * (tripod3.z - tripod1.z)
 							- (tripod3.y - tripod1.y) * (tripod2.z - tripod1.z);
-						//yÖá·½Ïò·ÖÏòÁ¿j
+						//yè½´æ–¹å‘åˆ†å‘é‡j
 						float pb = (tripod2.z - tripod1.z) * (tripod3.x - tripod1.x)
 							- (tripod3.z - tripod1.z) * (tripod2.x - tripod1.x);
 						float pc = (tripod2.x - tripod1.x) * (tripod3.y - tripod1.y)
 							- (tripod3.x - tripod1.x) * (tripod2.y - tripod1.y);
 						float pd = -(pa * tripod1.x + pb * tripod1.y + pc * tripod1.z);
 
-						//·¨ÏòÁ¿µÄÄ£
+						//æ³•å‘é‡çš„æ¨¡
 						float ps = sqrt(pa * pa + pb * pb + pc * pc);
-						//pa pb pcÎª·¨ÏòÁ¿¸÷·½ÏòÉÏµÄµ¥Î»ÏòÁ¿
+						//pa pb pcä¸ºæ³•å‘é‡å„æ–¹å‘ä¸Šçš„å•ä½å‘é‡
 						pa /= ps;
 						pb /= ps;
 						pc /= ps;
 						pd /= ps;
 
-						//µãµ½ÃæµÄ¾àÀë£ºÏòÁ¿OAÓëÓë·¨ÏòÁ¿µÄµã»ı³ıÒÔ·¨ÏòÁ¿µÄÄ£
+						//ç‚¹åˆ°é¢çš„è·ç¦»ï¼šå‘é‡OAä¸ä¸æ³•å‘é‡çš„ç‚¹ç§¯é™¤ä»¥æ³•å‘é‡çš„æ¨¡
 						float pd2 = pa * pointSel.x + pb * pointSel.y + pc * pointSel.z + pd;
 
 						pointProj = pointSel;
@@ -704,7 +704,7 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 						coeff.intensity = s * pd2;
 
 						if (s > 0.1 && pd2 != 0) {
-							//±£´æÔ­Ê¼µãÓëÏàÓ¦µÄÏµÊı
+							//ä¿å­˜åŸå§‹ç‚¹ä¸ç›¸åº”çš„ç³»æ•°
 							laserCloudOri->push_back(surfPointsFlat->points[i]);
 							coeffSel->push_back(coeff);
 						}
@@ -712,37 +712,37 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 
 				}
 
-				//ºóÃæÓ¦¸ÃÊÇ½â¹«Ê½9¡£¡£L-MµÄ½âËã¹ı³Ì         Ææ¹Ö£¬L-MµÄ½âËã²¿·Ö¼¸ºõ²»ĞèÒªÊ±¼ä£¬Ö»ĞèÒª2£¬3¸öÊ±ÖÓÖÜÆÚ¡£¡£¡£
-				//À×´ïµÄÔË¶¯ÊÇÁ¬ĞøµÄ¡£½«ËùÓĞ¶ÔÓ¦µ½µÄµãÇóµ½Ö±ÏßµÄ¾àÀëµ½ÃæµÄ¾àÀëÖ®ºÍ×î¶ÌÈ»ºó°´ÕÕLevenberg-MarquardtËã·¨µü´ú¼ÆËã£¬µÃµ½Á½Ö¡Ö®¼äµÄ±ä»»£¬×îºóÍ¨¹ıÀÛ¼Æ¼ÆËãodom
-				int pointSelNum = laserCloudOri->points.size(); // Æ¥Åäµ½µÄµãµÄ¸öÊı(¼´´æÔÚ¶àÉÙ¸öÔ¼Êø)
-				if (pointSelNum < 10)	//ÌØÕ÷µãÌ«ÉÙ;
+				//åé¢åº”è¯¥æ˜¯è§£å…¬å¼9ã€‚ã€‚L-Mçš„è§£ç®—è¿‡ç¨‹         å¥‡æ€ªï¼ŒL-Mçš„è§£ç®—éƒ¨åˆ†å‡ ä¹ä¸éœ€è¦æ—¶é—´ï¼Œåªéœ€è¦2ï¼Œ3ä¸ªæ—¶é’Ÿå‘¨æœŸã€‚ã€‚ã€‚
+				//é›·è¾¾çš„è¿åŠ¨æ˜¯è¿ç»­çš„ã€‚å°†æ‰€æœ‰å¯¹åº”åˆ°çš„ç‚¹æ±‚åˆ°ç›´çº¿çš„è·ç¦»åˆ°é¢çš„è·ç¦»ä¹‹å’Œæœ€çŸ­ç„¶åæŒ‰ç…§Levenberg-Marquardtç®—æ³•è¿­ä»£è®¡ç®—ï¼Œå¾—åˆ°ä¸¤å¸§ä¹‹é—´çš„å˜æ¢ï¼Œæœ€åé€šè¿‡ç´¯è®¡è®¡ç®—odom
+				int pointSelNum = laserCloudOri->points.size(); // åŒ¹é…åˆ°çš„ç‚¹çš„ä¸ªæ•°(å³å­˜åœ¨å¤šå°‘ä¸ªçº¦æŸ)
+				if (pointSelNum < 10)	//ç‰¹å¾ç‚¹å¤ªå°‘;
 				{
 					continue;
 				}
 
 				Eigen::Matrix<float, Eigen::Dynamic, 6> matA(pointSelNum, 6);	//n*6
-				Eigen::Matrix<float, 6, Eigen::Dynamic> matAt(6, pointSelNum);	//6*n  AµÄ×ªÖÃ
+				Eigen::Matrix<float, 6, Eigen::Dynamic> matAt(6, pointSelNum);	//6*n  Açš„è½¬ç½®
 				Eigen::Matrix<float, 6, 6> matAtA;								//6*6
 				Eigen::VectorXf matB(pointSelNum);								//n*1
 				Eigen::Matrix<float, 6, 1> matAtB;								//6*1								
 				Eigen::Matrix<float, 6, 1> matX;
 
-				// ±éÀúÃ¿Ò»¸öÌØÕ÷µã£¬¹¹½¨Jaccobian¾ØÕó  ĞèÒªµÃµ½µÄÊÇ¾àÀë¶Ô×ø±ê±ä»»µÄÆ«µ¼Êı
-				// ¹¹½¨matA and matB
+				// éå†æ¯ä¸€ä¸ªç‰¹å¾ç‚¹ï¼Œæ„å»ºJaccobiançŸ©é˜µ  éœ€è¦å¾—åˆ°çš„æ˜¯è·ç¦»å¯¹åæ ‡å˜æ¢çš„åå¯¼æ•°
+				// æ„å»ºmatA and matB
 				for (int i = 0; i < pointSelNum; i++)
 				{
 					/**
-					* ²ÉÓÃLevenberg-Marquardt¼ÆËã
-					* Ê×ÏÈ½¨Á¢µ±Ç°Ê±¿ÌLidar×ø±êÏµÏÂÌáÈ¡µ½µÄÌØÕ÷µãÓëµãµ½Ö±Ïß/Æ½Ãæ
-					* µÄÔ¼Êø·½³Ì¡£¶øºó¶ÔÔ¼Êø·½³ÌÇó¶Ô×ø±ê±ä»»(3Ğı×ª+3Æ½ÒÆ)µÄÆ«µ¼
-					* ¹«Ê½²Î¼ûÂÛÎÄ(2)-(8)
-					*ÓĞ¼¸¸ö¶ÔÓ¦µã¾ÍÓĞ¼¸¸öÔ¼Êø·½³Ì
+					* é‡‡ç”¨Levenberg-Marquardtè®¡ç®—
+					* é¦–å…ˆå»ºç«‹å½“å‰æ—¶åˆ»Lidaråæ ‡ç³»ä¸‹æå–åˆ°çš„ç‰¹å¾ç‚¹ä¸ç‚¹åˆ°ç›´çº¿/å¹³é¢
+					* çš„çº¦æŸæ–¹ç¨‹ã€‚è€Œåå¯¹çº¦æŸæ–¹ç¨‹æ±‚å¯¹åæ ‡å˜æ¢(3æ—‹è½¬+3å¹³ç§»)çš„åå¯¼
+					* å…¬å¼å‚è§è®ºæ–‡(2)-(8)
+					*æœ‰å‡ ä¸ªå¯¹åº”ç‚¹å°±æœ‰å‡ ä¸ªçº¦æŸæ–¹ç¨‹
 					*/
-					pointOri = laserCloudOri->points[i];// µ±Ç°´¦ÀíµÄµã
-					coeff = coeffSel->points[i];// ¸ÃµãËù¶ÔÓ¦µÄÆ«µ¼Êı
+					pointOri = laserCloudOri->points[i];// å½“å‰å¤„ç†çš„ç‚¹
+					coeff = coeffSel->points[i];// è¯¥ç‚¹æ‰€å¯¹åº”çš„åå¯¼æ•°
 
 					float s = 1;
-					//transform¾ÍÊÇTkL(t)£¬´æ´¢µÄ ·Ö±ğÊÇ½Ç¶ÈºÍÎ»ÖÃĞÅÏ¢
+					//transformå°±æ˜¯TkL(t)ï¼Œå­˜å‚¨çš„ åˆ†åˆ«æ˜¯è§’åº¦å’Œä½ç½®ä¿¡æ¯
 					float srx = sin(s * transform.rot_x.value());
 					float crx = cos(s * transform.rot_x.value());
 					float sry = sin(s * transform.rot_y.value());
@@ -753,8 +753,8 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 					float ty = s * transform.pos.y();
 					float tz = s * transform.pos.z();
 
-					//loss¶ÔRT¾ØÕóÖĞµÄ²ÎÊıÇóÆ«µ¼ £¿£¿£¿£¿
-					//¹¹½¨LM·½·¨ÀïÃæµÄA¾ØÕó£¬Çó³öÀ´µÄMATXÊÇÔöÁ¿deltaX
+					//losså¯¹RTçŸ©é˜µä¸­çš„å‚æ•°æ±‚åå¯¼ ï¼Ÿï¼Ÿï¼Ÿï¼Ÿ
+					//æ„å»ºLMæ–¹æ³•é‡Œé¢çš„AçŸ©é˜µï¼Œæ±‚å‡ºæ¥çš„MATXæ˜¯å¢é‡deltaX
 					float arx = (-s * crx*sry*srz*pointOri.x + s * crx*crz*sry*pointOri.y + s * srx*sry*pointOri.z
 						+ s * tx*crx*sry*srz - s * ty*crx*crz*sry - s * tz*srx*sry) * coeff.x
 						+ (s*srx*srz*pointOri.x - s * crz*srx*pointOri.y + s * crx*pointOri.z
@@ -786,7 +786,7 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 
 					float atz = s * crx*sry * coeff.x - s * srx * coeff.y - s * crx*cry * coeff.z;
 
-					//¾àÀë£¬µãÏß¾àÀë£¬µãÃæ¾àÀë
+					//è·ç¦»ï¼Œç‚¹çº¿è·ç¦»ï¼Œç‚¹é¢è·ç¦»
 					float d2 = coeff.intensity;
 
 					matA(i, 0) = arx;
@@ -797,22 +797,22 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 					matA(i, 5) = atz;
 					matB(i, 0) = -0.05 * d2;
 				}
-				// ×îĞ¡¶ş³Ë¼ÆËã(QR·Ö½â·¨)
+				// æœ€å°äºŒä¹˜è®¡ç®—(QRåˆ†è§£æ³•)
 				matAt = matA.transpose();
 				matAtA = matAt * matA;
 				matAtB = matAt * matB;
 
-				//Í¨¹ı¾ØÕó·Ö½âÀ´Çó½â¾ØÕó·½³Ì£¬ËÙ¶È±ÈÇóÄæ¿ì  matAtA*matX=matAtB£»½âmatX
+				//é€šè¿‡çŸ©é˜µåˆ†è§£æ¥æ±‚è§£çŸ©é˜µæ–¹ç¨‹ï¼Œé€Ÿåº¦æ¯”æ±‚é€†å¿«  matAtA*matX=matAtBï¼›è§£matX
 				matX = matAtA.colPivHouseholderQr().solve(matAtB);
 
-				//µÚÒ»´Îµü´ú²Å½øĞĞµÄ²Ù×÷£¬Ó¦¸ÃÊÇ½øĞĞÁËÄ³Ğ©²Ù×÷±ÜÃâ¾Ö²¿×îÓÅ
+				//ç¬¬ä¸€æ¬¡è¿­ä»£æ‰è¿›è¡Œçš„æ“ä½œï¼Œåº”è¯¥æ˜¯è¿›è¡Œäº†æŸäº›æ“ä½œé¿å…å±€éƒ¨æœ€ä¼˜
 				if (iterCount == 0)
 				{
-					Eigen::Matrix<float, 1, 6> matE;	//ÌØÕ÷Öµ1*6¾ØÕó
-					Eigen::Matrix<float, 6, 6> matV;	//ÌØÕ÷ÏòÁ¿6*6¾ØÕó
+					Eigen::Matrix<float, 1, 6> matE;	//ç‰¹å¾å€¼1*6çŸ©é˜µ
+					Eigen::Matrix<float, 6, 6> matV;	//ç‰¹å¾å‘é‡6*6çŸ©é˜µ
 					Eigen::Matrix<float, 6, 6> matV2;
 
-					// ¼ÆËã¾ØÕóµÄÌØÕ÷ÏòÁ¿E¼°ÌØÕ÷ÏòÁ¿µÄ·´¶Ô³ÆÕóV
+					// è®¡ç®—çŸ©é˜µçš„ç‰¹å¾å‘é‡EåŠç‰¹å¾å‘é‡çš„åå¯¹ç§°é˜µV
 					Eigen::SelfAdjointEigenSolver< Eigen::Matrix<float, 6, 6> > esolver(matAtA);
 					matE = esolver.eigenvalues().real();
 					matV = esolver.eigenvectors().real();
@@ -820,12 +820,12 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 					matV2 = matV;
 
 					isDegenerate = false;
-					float eignThre[6] = { 10, 10, 10, 10, 10, 10 }; //ÌØÕ÷ÖµÈ¡ÖµÃÅ¼÷
-					for (int i = 5; i >= 0; i--)//´ÓĞ¡µ½´ó²éÕÒ
+					float eignThre[6] = { 10, 10, 10, 10, 10, 10 }; //ç‰¹å¾å€¼å–å€¼é—¨æ§›
+					for (int i = 5; i >= 0; i--)//ä»å°åˆ°å¤§æŸ¥æ‰¾
 					{
-						if (matE(0, i) < eignThre[i])  ////ÌØÕ÷ÖµÌ«Ğ¡£¬ÔòÈÏÎª´¦ÔÚ¼æ²¢»·¾³ÖĞ£¬·¢ÉúÁËÍË»¯
+						if (matE(0, i) < eignThre[i])  ////ç‰¹å¾å€¼å¤ªå°ï¼Œåˆ™è®¤ä¸ºå¤„åœ¨å…¼å¹¶ç¯å¢ƒä¸­ï¼Œå‘ç”Ÿäº†é€€åŒ–
 						{
-							for (int j = 0; j < 6; j++)//¶ÔÓ¦µÄÌØÕ÷ÏòÁ¿ÖÃÎª0
+							for (int j = 0; j < 6; j++)//å¯¹åº”çš„ç‰¹å¾å‘é‡ç½®ä¸º0
 							{
 								matV2(i, j) = 0;
 							}
@@ -835,10 +835,10 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 							break;
 						}
 					}
-					matP = matV.inverse() * matV2;//¼ÆËãP¾ØÕó
+					matP = matV.inverse() * matV2;//è®¡ç®—PçŸ©é˜µ
 				}
 
-				if (isDegenerate) //Èç¹û·¢ÉúÍË»¯£¬Ö»Ê¹ÓÃÔ¤²â¾ØÕóP¼ÆËã
+				if (isDegenerate) //å¦‚æœå‘ç”Ÿé€€åŒ–ï¼Œåªä½¿ç”¨é¢„æµ‹çŸ©é˜µPè®¡ç®—
 				{
 					Eigen::Matrix<float, 6, 1> matX2;
 					matX2 = matX;
@@ -846,8 +846,8 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 					matX = matP * matX2;
 				}
 
-				//µü´úÖĞ²Ù×÷£¬ÀÛ»ıĞı×ª½Ç¶ÈÓëÎ»ÒÆ
-				//½â³öÀ´µÄMatX°üº¬µÄĞÅÏ¢Ó¦¸ÃÊÇÒ»¸öĞı×ªÆ½ÒÆÁ¿£¬±íÊ¾¾­¹ıÈç´ËĞı×ªÆ½ÒÆºóÎó²î×îĞ¡
+				//è¿­ä»£ä¸­æ“ä½œï¼Œç´¯ç§¯æ—‹è½¬è§’åº¦ä¸ä½ç§»
+				//è§£å‡ºæ¥çš„MatXåŒ…å«çš„ä¿¡æ¯åº”è¯¥æ˜¯ä¸€ä¸ªæ—‹è½¬å¹³ç§»é‡ï¼Œè¡¨ç¤ºç»è¿‡å¦‚æ­¤æ—‹è½¬å¹³ç§»åè¯¯å·®æœ€å°
 				transform.rot_x = transform.rot_x.value() + matX(0, 0);
 				transform.rot_y = transform.rot_y.value() + matX(1, 0);
 				transform.rot_z = transform.rot_z.value() + matX(2, 0);
@@ -855,7 +855,7 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 				transform.pos.y() += matX(4, 0);
 				transform.pos.z() += matX(5, 0);
 
-				//Èç¹û³öÏÖÁËnanÊı¾İ£¬ÖØÖÃ¸ÃÊı¾İ¡£¡£
+				//å¦‚æœå‡ºç°äº†nanæ•°æ®ï¼Œé‡ç½®è¯¥æ•°æ®ã€‚ã€‚
 				if (isnan(transform.rot_x.value())) transform.rot_x = Angle();
 				if (isnan(transform.rot_y.value())) transform.rot_y = Angle();
 				if (isnan(transform.rot_z.value())) transform.rot_z = Angle();
@@ -864,8 +864,8 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 				if (isnan(transform.pos.y())) transform.pos.y() = 0.0;
 				if (isnan(transform.pos.z())) transform.pos.z() = 0.0;
 
-				//deltaR±íÊ¾×îĞ¡¶ş³ËÄâºÏµÄ¾«¶È£»Èç¹û²»·ûºÏÒªÇó£¬Ôòiter+1,¼ÌĞøµü´ú
-				//»¹ÓĞ¸ödeltaT;;¶Ô½Ç¶ÈºÍÎ»ÖÃ·Ö±ğÄâºÏ
+				//deltaRè¡¨ç¤ºæœ€å°äºŒä¹˜æ‹Ÿåˆçš„ç²¾åº¦ï¼›å¦‚æœä¸ç¬¦åˆè¦æ±‚ï¼Œåˆ™iter+1,ç»§ç»­è¿­ä»£
+				//è¿˜æœ‰ä¸ªdeltaT;;å¯¹è§’åº¦å’Œä½ç½®åˆ†åˆ«æ‹Ÿåˆ
 				float deltaR = sqrt(
 					pow(rad2deg(matX(0, 0)), 2) +
 					pow(rad2deg(matX(1, 0)), 2) +
@@ -884,20 +884,20 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 
 		}
 
-		//µü´úÍê±Ï£¬Ëã³öÁËÁ½ÛçµãÔÆ¼äµÄÏà¶ÔÔË¶¯£¬µ«ËûÃÇÊÇÔÚÕâÁ½Ö¡µãÔÆµÄ¾Ö²¿×ø±êÏµÏÂµÄ£¬
-		//ÎÒÃÇĞèÒª°ÑËü×ª»»µ½ÊÀ½ç×ø±êÏµÏÂ£¬Òò´ËĞèÒª½øĞĞ×ª»»
+		//è¿­ä»£å®Œæ¯•ï¼Œç®—å‡ºäº†ä¸¤å¨ç‚¹äº‘é—´çš„ç›¸å¯¹è¿åŠ¨ï¼Œä½†ä»–ä»¬æ˜¯åœ¨è¿™ä¸¤å¸§ç‚¹äº‘çš„å±€éƒ¨åæ ‡ç³»ä¸‹çš„ï¼Œ
+		//æˆ‘ä»¬éœ€è¦æŠŠå®ƒè½¬æ¢åˆ°ä¸–ç•Œåæ ‡ç³»ä¸‹ï¼Œå› æ­¤éœ€è¦è¿›è¡Œè½¬æ¢
 		Angle rx, ry, rz;
 
-		//¼ÆËãĞı×ª½ÇµÄÀÛ»ı±ä»¯Á¿£¬·µ»Ørx, ry, rz
+		//è®¡ç®—æ—‹è½¬è§’çš„ç´¯ç§¯å˜åŒ–é‡ï¼Œè¿”å›rx, ry, rz
 		AccumulateRotation(transformSum.rot_x,
 			transformSum.rot_y,
 			transformSum.rot_z,
 			-transform.rot_x,
-			-transform.rot_y.value() * 1.05,	//??1.05?? //ÇóÏà¶ÔÓÚÔ­µãµÄĞı×ªÁ¿,´¹Ö±·½ÏòÉÏ1.05±¶ĞŞÕı?
+			-transform.rot_y.value() * 1.05,	//??1.05?? //æ±‚ç›¸å¯¹äºåŸç‚¹çš„æ—‹è½¬é‡,å‚ç›´æ–¹å‘ä¸Š1.05å€ä¿®æ­£?
 			-transform.rot_z,
 			rx, ry, rz);
 
-		//µ±Ç°Î»×ËÓ³Éä»Ø³õÊ¼×ø±êÏµ; imuShiftFromStartÊÇÎ»ÒÆµÄÀÛ»ıÁ¿
+		//å½“å‰ä½å§¿æ˜ å°„å›åˆå§‹åæ ‡ç³»; imuShiftFromStartæ˜¯ä½ç§»çš„ç´¯ç§¯é‡
 		Vector3 v0(transform.pos.x() - imuShiftFromStart.x(),
 			transform.pos.y() - imuShiftFromStart.y(),
 			transform.pos.z()*1.05 - imuShiftFromStart.z());
@@ -907,7 +907,7 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 		Vector3 v3 = rotateY(v2, ry);
 		Vector3 trans = transformSum.pos - v3;
 
-		//ÔÙ²åÈëIMUµÄĞı×ª²âÁ¿Á¿£¬ÕâÀïÃ»ÓĞÊ¹ÓÃIMU£¬¿ÉÒÔ²»ÓÃÕâ¾ä»°¡£//¸ù¾İIMUĞŞÕıĞı×ªÁ¿
+		//å†æ’å…¥IMUçš„æ—‹è½¬æµ‹é‡é‡ï¼Œè¿™é‡Œæ²¡æœ‰ä½¿ç”¨IMUï¼Œå¯ä»¥ä¸ç”¨è¿™å¥è¯ã€‚//æ ¹æ®IMUä¿®æ­£æ—‹è½¬é‡
 		//PluginIMURotation(rx, ry, rz,
 		//	imuPitchStart, imuYawStart, imuRollStart,
 		//	imuPitchLast, imuYawLast, imuRollLast,
@@ -918,7 +918,7 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 		transformSum.rot_z = rz;
 		transformSum.pos = trans;
 
-		//·µ»ØÖµµÄµÚÒ»Ïî£¬×Ütransform£¬Global²ã´ÎµÄ//µÃµ½ÊÀ½ç×ø±êÏµÏÂµÄ×ªÒÆ¾ØÕó
+		//è¿”å›å€¼çš„ç¬¬ä¸€é¡¹ï¼Œæ€»transformï¼ŒGlobalå±‚æ¬¡çš„//å¾—åˆ°ä¸–ç•Œåæ ‡ç³»ä¸‹çš„è½¬ç§»çŸ©é˜µ
 		OdometryValueBack.transformSum[0] = rx.value();
 		OdometryValueBack.transformSum[1] = ry.value();
 		OdometryValueBack.transformSum[2] = rz.value();
@@ -927,9 +927,9 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 		OdometryValueBack.transformSum[5] = trans.z();
 
 		int cornerPointsLessSharpNum = cornerPointsLessSharp->points.size();
-		//µÃµ½Pk-;Ò²¾ÍÊÇ½«k-1µ½KÖ®¼äÕÒµ½µÄÌØÕ÷µãÈ«²¿Ó³Éäµ½kÊ±¿Ì£»¶ÔÓ¦ÓÚÎ±´úÂëµÚ22ĞĞ£»
-		//¶ÔµãÔÆµÄÇúÂÊ±È½Ï´óºÍ±È½ÏĞ¡µÄµãÍ¶Ó°µ½É¨Ãè½áÊøÎ»ÖÃ
-		//ÎªÏÂ´Îµü´ú×ö×¼±¸
+		//å¾—åˆ°Pk-;ä¹Ÿå°±æ˜¯å°†k-1åˆ°Kä¹‹é—´æ‰¾åˆ°çš„ç‰¹å¾ç‚¹å…¨éƒ¨æ˜ å°„åˆ°kæ—¶åˆ»ï¼›å¯¹åº”äºä¼ªä»£ç ç¬¬22è¡Œï¼›
+		//å¯¹ç‚¹äº‘çš„æ›²ç‡æ¯”è¾ƒå¤§å’Œæ¯”è¾ƒå°çš„ç‚¹æŠ•å½±åˆ°æ‰«æç»“æŸä½ç½®
+		//ä¸ºä¸‹æ¬¡è¿­ä»£åšå‡†å¤‡
 		// for every less sharp point
 		for (int i = 0; i < cornerPointsLessSharpNum; i++) 
 		{
@@ -944,7 +944,7 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 		}
 
 		frameCount++;
-		//µãÔÆÈ«²¿µã£¬Ã¿¼ä¸ôÒ»¸öµãÔÆÊı¾İÏà¶ÔµãÔÆ×îºóÒ»¸öµã½øĞĞ»û±äĞ£Õı£¿£¿£¿£¿
+		//ç‚¹äº‘å…¨éƒ¨ç‚¹ï¼Œæ¯é—´éš”ä¸€ä¸ªç‚¹äº‘æ•°æ®ç›¸å¯¹ç‚¹äº‘æœ€åä¸€ä¸ªç‚¹è¿›è¡Œç•¸å˜æ ¡æ­£ï¼Ÿï¼Ÿï¼Ÿï¼Ÿ
 		if (frameCount >= skipFrameNum + 1) {
 			int laserCloudFullResNum = laserCloudFullRes->points.size();
 			for (int i = 0; i < laserCloudFullResNum; i++) {
@@ -952,9 +952,9 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 			}
 		}
 
-		//½»»»cornerPointsLessSharp Óë laserCloudCornerLast£» ×¢Òâ£¬µ±Ç°Ö¡±ä³ÉÉÏÒ»Ö¡£¬Î»´¦ÀíÏÂÒ»Ö¡×ö×¼±¸
-		//ÓëSystemInit¹¦ÄÜÀàËÆ
-		//surfPointsLessFlat Óë laserCloudSurfLast
+		//äº¤æ¢cornerPointsLessSharp ä¸ laserCloudCornerLastï¼› æ³¨æ„ï¼Œå½“å‰å¸§å˜æˆä¸Šä¸€å¸§ï¼Œä½å¤„ç†ä¸‹ä¸€å¸§åšå‡†å¤‡
+		//ä¸SystemInitåŠŸèƒ½ç±»ä¼¼
+		//surfPointsLessFlat ä¸ laserCloudSurfLast
 		pcl::PointCloud<PointType>::Ptr laserCloudTemp = cornerPointsLessSharp;
 		cornerPointsLessSharp = laserCloudCornerLast;
 		laserCloudCornerLast = laserCloudTemp;
@@ -965,14 +965,14 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 
 		laserCloudCornerLastNum = laserCloudCornerLast->points.size();
 		laserCloudSurfLastNum = laserCloudSurfLast->points.size();
-		//µã×ã¹»¶à¾Í¹¹½¨kd-tree£¬·ñÔòÆúÓÃ´ËÖ¡£¬ÑØÓÃÉÏÒ»Ö¡Êı¾İµÄkd-tree
+		//ç‚¹è¶³å¤Ÿå¤šå°±æ„å»ºkd-treeï¼Œå¦åˆ™å¼ƒç”¨æ­¤å¸§ï¼Œæ²¿ç”¨ä¸Šä¸€å¸§æ•°æ®çš„kd-tree
 		if (laserCloudCornerLastNum > 10 && laserCloudSurfLastNum > 100) {
-			//¹¹½¨kdÊ÷£¬°Ñµ±Ç°ÌØÕ÷µã´æÈëkdÊ÷ÖÖ±ãÓÚÏÂ´ÎËÑË÷£» ¿É²¢ĞĞ
+			//æ„å»ºkdæ ‘ï¼ŒæŠŠå½“å‰ç‰¹å¾ç‚¹å­˜å…¥kdæ ‘ç§ä¾¿äºä¸‹æ¬¡æœç´¢ï¼› å¯å¹¶è¡Œ
 			time1 = clock();
 			kdtreeCornerLast->setInputCloud(laserCloudCornerLast);
 
 #ifdef MY_SHOW_ODOM_TIME_PROFILE	
-			//´Ë´¦»á´òÓ¡´óÁ¿Êı¾İ£¬Ã¿ËÑË÷Ò»´Î¶¼»á´òÓ¡ºÜ¶àÊı¾İ
+			//æ­¤å¤„ä¼šæ‰“å°å¤§é‡æ•°æ®ï¼Œæ¯æœç´¢ä¸€æ¬¡éƒ½ä¼šæ‰“å°å¾ˆå¤šæ•°æ®
 			time2 = clock();
 			time_last1 = (double)(time2 - time1);
 			std::cout << "kdtree build tree time is : " << time_last1 << std::endl;
@@ -1015,7 +1015,7 @@ LaserOdometryBack LaserOdometry::MyLaserOdometryHandler(const ScanRegistrationBa
 /*********************************************************************************/
 		}
 
-		//odometry ·µ»ØÖµ
+		//odometry è¿”å›å€¼
 		OdometryValueBack.laserCloudCornerLast = laserCloudCornerLast;
 		OdometryValueBack.laserCloudFullRes = laserCloudFullRes;
 		OdometryValueBack.laserCloudSurfLast = laserCloudSurfLast;

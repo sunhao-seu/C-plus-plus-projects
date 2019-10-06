@@ -14,6 +14,19 @@ int main(int argc, char* argv[])
 	pcl::visualization::CloudViewer MapViewer("mapping viewer");
 #endif
 
+#ifdef USE_GBDS_ON
+	remove("gbds_time_store.txt");
+#endif
+#ifdef USE_KDTREE_ON
+	remove("kdtree_time_store.txt");
+#endif
+
+#ifdef BOTH_KDTREE_AND_GBDS
+	remove("kdtree_time_store.txt");
+	remove("dataset_size.txt");
+#endif
+	
+
 
 	ScanRegistrationBack ScanValueBack;
 	ScanRegistration Scanner;
@@ -37,10 +50,15 @@ int main(int argc, char* argv[])
 	PointCloud::Ptr pFinalMap(new PointCloud());
 
 	int count = 1000;	//Lidar frames count
+
 	while (true)
 	{
 		//if (count % 100 == 0)
 			std::cout << "Frame " << count << std::endl;
+			if (count > 1300)
+			{
+				cout << "haha0";
+			}
 		if (_myHdlGrabber.GetFrame(count))
 		{
 			std::cout << "No Frame" << std::endl;
@@ -57,15 +75,15 @@ int main(int argc, char* argv[])
 			//change pcap data to vector array; or to points cloud data type
 			PointCloud::Ptr newCloud = pcap2PointCloud(_myHdlGrabber.Points);
 
-			//obtain the scan point cloud data£» pre-process cloud points and extract the feature points; correspond to paper 5.1
-			ScanValueBack = Scanner.ScanRegistrationHandle(*newCloud);	//´«ÈëµÄÊÇÒ»¸öÖ¸Õë
+			//obtain the scan point cloud dataï¼› pre-process cloud points and extract the feature points; correspond to paper 5.1
+			ScanValueBack = Scanner.ScanRegistrationHandle(*newCloud);	//ä¼ å…¥çš„æ˜¯ä¸€ä¸ªæŒ‡é’ˆ
 
 			OdometryValueBack = Odometrier.MyLaserOdometryHandler(ScanValueBack);
 
 			// process laserMapping and return the value to mappingBackValue
 			MappingBackValue = Mapper.LaserMappingHandler(OdometryValueBack);
 
-			//½«ËùÓÐÊý¾Ý·ÅÈë×ÜµØÍ¼
+			//å°†æ‰€æœ‰æ•°æ®æ”¾å…¥æ€»åœ°å›¾
 			*pFinalMap += *(MappingBackValue.laserCloudFullRes);
 
 			//pFinalMapVoxel->clear();

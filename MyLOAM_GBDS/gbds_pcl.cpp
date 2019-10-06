@@ -270,15 +270,15 @@ void SplitSubSpacePrecise(const int data_set_size, const struct MaxMin data_max_
 	int x_split_size = (data_max_min.xmax - data_max_min.xmin) / k_split_precise;
 	int y_split_size = (data_max_min.ymax - data_max_min.ymin) / k_split_precise;
 	int z_split_size = (data_max_min.zmax - data_max_min.zmin) / k_split_precise;
-	int total_sub_spaces = (x_split_size * y_split_size * z_split_size);
+	int total_sub_spaces = ((x_split_size+1) * (y_split_size + 1) * (z_split_size + 1));	//åŸæ¥æ˜¯è¿™ä¸ªåœ°æ–¹çš„é—®é¢˜ã€‚ã€‚å†™ä»£ç è¿˜æ˜¯å¾—æ€è™‘å‘¨å…¨å•Šã€‚ã€‚
 
 	//ensure the number of sub-spaces won't exceed the k_sub_region_max
 	if (total_sub_spaces > k_sub_region_max)
 	{
-		int split_down_size = pow((k_sub_region_max / total_sub_spaces),1.0/3) +1;
-		x_split_size = x_split_size / split_down_size;
-		y_split_size = y_split_size / split_down_size;
-		z_split_size = z_split_size / split_down_size;
+		int split_down_size = ceil(pow((k_sub_region_max / total_sub_spaces),1/3)) +1;	//å¥½åƒæ˜¯è¿™ä¸ªåœ°æ–¹çš„é—®é¢˜ã€‚ã€‚
+		x_split_size = x_split_size / split_down_size -1;
+		y_split_size = y_split_size / split_down_size -1;		//è¿™ä¸ªå°buGæ‰¾äº†æˆ‘å¥½ä¹…ï¼Œã€‚ã€‚æˆ‘è¯´æ€ä¹ˆä¼šç®—å‡ºæ¥è¶…è¿‡èŒƒå›´çš„æ•°;;
+		z_split_size = z_split_size / split_down_size -1;
 	}
 
 	//when know the split unit and range, we can calculate the each split point and store it in a array.
@@ -299,28 +299,35 @@ void SplitSubSpacePrecise(const int data_set_size, const struct MaxMin data_max_
 	split_array_size.x_array_size = x_split_size + 1;
 	split_array_size.y_array_size = y_split_size + 1;
 	split_array_size.z_array_size = z_split_size + 1;
+
 }
 
 //template<int DATA_SIZE, int SUBSETS_NUM, int SUBSPACE_NUM>
 void DataClassify(struct ThreeDimPoint data_set[], int data_set_size, type_point x_split_array[], type_point y_split_array[], type_point z_split_array[], struct SplitArraySize split_array_size, int sub_sets[][k_sub_space_array_size], int sub_sets_size[])
 {
-	memset(sub_sets, 0, sizeof(int) * k_sub_space_array_size * k_sub_region_max);
-	memset(sub_sets_size, 0, sizeof(int) * k_sub_region_max);
+	//memset(sub_sets, 0, sizeof(int) * k_sub_space_array_size * k_sub_region_max);
+	//memset(sub_sets_size, 0, sizeof(int) * k_sub_region_max);
+	for (int i = 0; i < k_sub_region_max; i++)
+	{
+		sub_sets_size[i] = 0;
+	}
+
 	srand((unsigned)time(NULL));
 
 	for (int i = 0; i < data_set_size; i++)
 	{
 		int data_index = PCLCalculateIndex(data_set[i], x_split_array, y_split_array, z_split_array, split_array_size);
-		int index_size = sub_sets_size[data_index] + 1;		//´ËÊı¾İ´æ·ÅµÄÏÂ±ê
 
 		sub_sets_size[data_index] = sub_sets_size[data_index] + 1;
 
-		//ÒÔÏÂ²Ù×÷È·±£Êı¾İ²»»á³¬¹ı¸ø¶¨¿Õ¼äµÄ·¶Î§£¬Í¬Ê±»¹±£Ö¤ÁËÒ»¶¨µÄ¾ùÔÈ²Éµã
-		if (index_size < 1.0/3*k_sub_space_array_size)		//´æ´¢Êı¾İÔÚ0µ½1/3*k_sub_space_array_sizeÖ®¼ä
-			sub_sets[data_index][sub_sets_size[data_index]] = i;
-		else if (index_size < 2.0 / 3 * k_sub_space_array_size)	//´æ´¢Êı¾İÔÚ1/3*k_sub_space_array_sizeµ½2/3*k_sub_space_array_sizeÖ®¼ä
+		//ä»¥ä¸‹æ“ä½œç¡®ä¿æ•°æ®ä¸ä¼šè¶…è¿‡ç»™å®šç©ºé—´çš„èŒƒå›´ï¼ŒåŒæ—¶è¿˜ä¿è¯äº†ä¸€å®šçš„å‡åŒ€é‡‡ç‚¹
+		if (sub_sets_size[data_index] < 1.0 / 3 * k_sub_space_array_size)		//å­˜å‚¨æ•°æ®åœ¨0åˆ°1/3*k_sub_space_array_sizeä¹‹é—´
 		{
-			//Èı·ÖÖ®Ò»µÄ¸ÅÂÊ´æÆğÀ´
+			sub_sets[data_index][sub_sets_size[data_index]] = i;
+		}
+		else if (sub_sets_size[data_index] < 2.0 / 3 * k_sub_space_array_size)	//å­˜å‚¨æ•°æ®åœ¨1/3*k_sub_space_array_sizeåˆ°2/3*k_sub_space_array_sizeä¹‹é—´
+		{
+			//ä¸‰åˆ†ä¹‹ä¸€çš„æ¦‚ç‡å­˜èµ·æ¥
 			int rand_number = rand() % 10;
 			if (rand_number < 3)
 				sub_sets[data_index][sub_sets_size[data_index]] = i;
@@ -328,27 +335,31 @@ void DataClassify(struct ThreeDimPoint data_set[], int data_set_size, type_point
 				sub_sets_size[data_index] = sub_sets_size[data_index] - 1;
 		}
 			
-		else if (index_size < 4.0 / 5 * k_sub_space_array_size)	//´æ´¢Êı¾İÔÚ2/3*k_sub_space_array_sizeµ½4/5*k_sub_space_array_sizeÖ®¼ä
+		else if (sub_sets_size[data_index] < 4.0 / 5 * k_sub_space_array_size)	//å­˜å‚¨æ•°æ®åœ¨2/3*k_sub_space_array_sizeåˆ°4/5*k_sub_space_array_sizeä¹‹é—´
 		{
-			//Îå·ÖÖ®Ò»µÄ¸ÅÂÊ´æÆğÀ´
+			//äº”åˆ†ä¹‹ä¸€çš„æ¦‚ç‡å­˜èµ·æ¥
 			int rand_number = rand() % 10;
 			if (rand_number < 2)
 				sub_sets[data_index][sub_sets_size[data_index]] = i;
 			else
 				sub_sets_size[data_index] = sub_sets_size[data_index] - 1;
 		}
-		else if(index_size < k_sub_space_array_size)	//´æ´¢Êı¾İÔÚ4/5*k_sub_space_array_sizeµ½k_sub_space_array_sizeÖ®¼ä
+		else if(sub_sets_size[data_index] < k_sub_space_array_size)	//å­˜å‚¨æ•°æ®åœ¨4/5*k_sub_space_array_sizeåˆ°k_sub_space_array_sizeä¹‹é—´
 		{
-			//10·ÖÖ®Ò»µÄ¸ÅÂÊ´æÆğÀ´
+			//10åˆ†ä¹‹ä¸€çš„æ¦‚ç‡å­˜èµ·æ¥
 			int rand_number = rand() % 10;
 			if (rand_number < 1)
 				sub_sets[data_index][sub_sets_size[data_index]] = i;
 			else
 				sub_sets_size[data_index] = sub_sets_size[data_index] - 1;
 		}
-		else sub_sets_size[data_index]=sub_sets_size[data_index] - 1;
+		else
+		{
+			sub_sets_size[data_index] = sub_sets_size[data_index] - 1;
+		}
 
 	}
+	
 }
 
 
@@ -446,9 +457,6 @@ void SearchKNearestNeighbors(int K, struct ThreeDimPoint query_data, struct Thre
 		for (int j = 0; j < sub_sets_size[valid_near_regions[i]]; j++)
 		{
 			//calculate the distance between query and point j;
-			int testa = valid_near_regions[i];
-			int testb = sub_sets[valid_near_regions[i]][j];
-			struct ThreeDimPoint testc = data_set[sub_sets[valid_near_regions[i]][j]];
 			type_point distance = PCLEucDist(query_data, data_set[sub_sets[ valid_near_regions[i] ][j] ]);
 			/*type_point distance2 = sqrt((query_data.x - data_set[sub_sets[valid_near_regions[i]][j]].x)*(query_data.x - data_set[sub_sets[valid_near_regions[i]][j]].x)
 				+ (query_data.y - data_set[sub_sets[valid_near_regions[i]][j]].y)*(query_data.y - data_set[sub_sets[valid_near_regions[i]][j]].y)
@@ -495,7 +503,7 @@ void Find_Near_Regions(int current_index, int search_distance, int near_regions[
 				{
 					int cal_index = current_index + ix * split_array_size.y_array_size * split_array_size.z_array_size + iy * split_array_size.z_array_size + iz;
 					//make sure the index is in the array's range
-					if ((cal_index >= 0) && (cal_index < split_array_size.x_array_size *split_array_size.y_array_size * split_array_size.z_array_size))
+					if ((cal_index >= 0) && (cal_index < (split_array_size.x_array_size *split_array_size.y_array_size * split_array_size.z_array_size)))
 					{
 						if(near_region_size < k_search_near_regions_max)
 						{

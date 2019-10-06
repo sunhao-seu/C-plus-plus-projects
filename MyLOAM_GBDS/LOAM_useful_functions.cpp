@@ -66,7 +66,7 @@ PointCloudXYZRGB PointT2PointXYZRGB(const PointCloud & PointTCloud)
 			p.x = PointTCloud.points[i].x;
 			p.y = PointTCloud.points[i].y;
 			p.z = PointTCloud.points[i].z;
-			//Ĭ�ϰ�ɫ
+			//默认白色
 			p.r = 255;
 			p.g = 255;
 			p.b = 255;
