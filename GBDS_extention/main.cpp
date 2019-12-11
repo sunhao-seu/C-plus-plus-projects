@@ -10,10 +10,11 @@
 #include "sds_lib.h"
 #endif
 
-#include "gbds_pcl.h"
+//#include "gbds_pcl.h"
+#include "GBDS_extention.h"
 
-#define query_set_size 1000
-#define map_corner_useful_data_set_size 50000
+#define query_set_size 100
+#define map_corner_useful_data_set_size 100000
 
 
 int main(int argc, char* argv[]){
@@ -40,21 +41,21 @@ int main(int argc, char* argv[]){
 
 
      //get the simulate input data
-     my_point_sel.x = rand() % 1000;
-     my_point_sel.y = rand() % 1000;
-     my_point_sel.z = rand() % 1000;
+     my_point_sel.x = rand() % 100;
+     my_point_sel.y = rand() % 100;
+     my_point_sel.z = rand() % 100;
      for(int i = 0; i < map_corner_useful_data_set_size; i ++)
      {
-    	 map_corner_data_set[i].x = rand() % 1000;
-    	 map_corner_data_set[i].y = rand() % 1000;
-    	 map_corner_data_set[i].z = rand() % 1000;
+    	 map_corner_data_set[i].x = rand() % 100;
+    	 map_corner_data_set[i].y = rand() % 100;
+    	 map_corner_data_set[i].z = rand() % 100;
      }
 
      std::cout << "map_corner_data_set[50].z: " << map_corner_data_set[50].z << std::endl;
 
     std::cout << "Before hardware GBDSIPCore1: " << std::endl;
     int trandform_data_size = map_corner_useful_data_set_size;
-	GBDSIPCore(1, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
+	ExGBDSIPCore_sw(1, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
     //GBDSIPCore_test(0, map_corner_data_set, map_corner_useful_data_set_size, &data_max_min);
     std::cout << "After hardware GBDSIPCore1: " << std::endl;
 //	std::cout << "map_corner_data_max_min.xmax is: " << data_max_min.xmax << std::endl;
@@ -62,7 +63,7 @@ int main(int argc, char* argv[]){
 
 	std::cout << "Before hardware GBDSIPCore0: " << std::endl;
 	trandform_data_size = 0;
-	GBDSIPCore(0, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
+	ExGBDSIPCore_sw(0, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
 	//GBDSIPCore_test(1, map_corner_data_set, map_corner_useful_data_set_size, &data_max_min);
 	std::cout << "After hardware GBDSIPCore0: " << std::endl;
 
@@ -84,15 +85,15 @@ int main(int argc, char* argv[]){
 	//test software time
 	clock_t before_knn_sw = clock();
 	rand_seed = (unsigned)(time(NULL));
-	trandform_data_size = 50000;
-	GBDSIPCore_sw(1, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
+	trandform_data_size = map_corner_useful_data_set_size;
+	ExGBDSIPCore_sw(1, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
 	clock_t build_gbds_sw = clock();
 	for(int i = 0; i < query_set_size; i ++)
 	{
 		my_point_sel = query_set[i];
 
 		trandform_data_size = 0;
-		GBDSIPCore_sw(0, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
+		ExGBDSIPCore_sw(0, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
 
 		result_index_sw[i] = map_corner_nearest_index[0];
 	}
@@ -107,14 +108,14 @@ int main(int argc, char* argv[]){
 	//test hardware time
 	clock_t before_knn = clock();
 	rand_seed = (unsigned)(time(NULL));
-	trandform_data_size = 50000;
-	GBDSIPCore(1, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
+	trandform_data_size = map_corner_useful_data_set_size;
+	ExGBDSIPCore_sw(1, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
 	clock_t build_gbds = clock();
 	for(int i = 0; i < query_set_size; i ++)
 	{
 		my_point_sel = query_set[i];
 		trandform_data_size = 0;
-		GBDSIPCore(0, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
+		ExGBDSIPCore_sw(0, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
 
 		result_index_hw[i] = map_corner_nearest_index[0];
 	}
