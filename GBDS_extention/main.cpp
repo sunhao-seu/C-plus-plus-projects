@@ -6,6 +6,8 @@
 #include <cstdlib>// Header file needed to use rand
 #include <ctime> // Header file needed to use time
 
+#define USE_SDX
+
 #ifdef USE_SDX
 #include "sds_lib.h"
 #endif
@@ -41,29 +43,27 @@ int main(int argc, char* argv[]){
 
 
      //get the simulate input data
-     my_point_sel.x = rand() % 100;
-     my_point_sel.y = rand() % 100;
-     my_point_sel.z = rand() % 100;
+     my_point_sel.x = rand() % 1000;
+     my_point_sel.y = rand() % 1000;
+     my_point_sel.z = rand() % 1000;
      for(int i = 0; i < map_corner_useful_data_set_size; i ++)
      {
-    	 map_corner_data_set[i].x = rand() % 100;
-    	 map_corner_data_set[i].y = rand() % 100;
-    	 map_corner_data_set[i].z = rand() % 100;
+    	 map_corner_data_set[i].x = rand() % 1000;
+    	 map_corner_data_set[i].y = rand() % 1000;
+    	 map_corner_data_set[i].z = rand() % 1000;
      }
 
      std::cout << "map_corner_data_set[50].z: " << map_corner_data_set[50].z << std::endl;
 
     std::cout << "Before hardware GBDSIPCore1: " << std::endl;
     int trandform_data_size = map_corner_useful_data_set_size;
-	ExGBDSIPCore_sw(1, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
-    //GBDSIPCore_test(0, map_corner_data_set, map_corner_useful_data_set_size, &data_max_min);
+	ExGBDSIPCore_hw(1, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
     std::cout << "After hardware GBDSIPCore1: " << std::endl;
-//	std::cout << "map_corner_data_max_min.xmax is: " << data_max_min.xmax << std::endl;
-//	std::cout << "map_corner_data_max_min.xmin is: " << data_max_min.xmin << std::endl;
+
 
 	std::cout << "Before hardware GBDSIPCore0: " << std::endl;
 	trandform_data_size = 0;
-	ExGBDSIPCore_sw(0, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
+	ExGBDSIPCore_hw(0, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
 	//GBDSIPCore_test(1, map_corner_data_set, map_corner_useful_data_set_size, &data_max_min);
 	std::cout << "After hardware GBDSIPCore0: " << std::endl;
 
@@ -82,6 +82,8 @@ int main(int argc, char* argv[]){
 
 	int result_index_sw[query_set_size];
 	int result_index_hw[query_set_size];
+
+
 	//test software time
 	clock_t before_knn_sw = clock();
 	rand_seed = (unsigned)(time(NULL));
@@ -104,18 +106,17 @@ int main(int argc, char* argv[]){
 	std::cout << query_set_size << " queries in " << map_corner_useful_data_set_size << " dataset gbds_sw time is :  "<<  time_last_sw << " ms!" << std::endl;
 
 
-
 	//test hardware time
 	clock_t before_knn = clock();
 	rand_seed = (unsigned)(time(NULL));
 	trandform_data_size = map_corner_useful_data_set_size;
-	ExGBDSIPCore_sw(1, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
+	ExGBDSIPCore_hw(1, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
 	clock_t build_gbds = clock();
 	for(int i = 0; i < query_set_size; i ++)
 	{
 		my_point_sel = query_set[i];
 		trandform_data_size = 0;
-		ExGBDSIPCore_sw(0, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
+		ExGBDSIPCore_hw(0, map_corner_data_set, trandform_data_size, rand_seed, 5, my_point_sel, map_corner_nearest_index, map_corner_nearest_distance, split_precise);
 
 		result_index_hw[i] = map_corner_nearest_index[0];
 	}
@@ -125,7 +126,10 @@ int main(int argc, char* argv[]){
 	std::cout <<  " build gbds with " << map_corner_useful_data_set_size << " dataset build gbds time is :  "<<  time_build_gbds << " ms!" << std::endl;
 	std::cout << query_set_size << " queries in " << map_corner_useful_data_set_size << " dataset gbds_hw time is :  "<<  time_last << " ms!" << std::endl;
 
-	getchar();
+
+
+
+	//getchar();
 
 	for(int i = 0; i < query_set_size; i ++)
 	{

@@ -129,21 +129,21 @@ loop_split_space_x:
 	for (int i = 1; i <= x_split_size; i++)
 	{
 #pragma HLS pipeline
-#pragma HLS loop_tripcount min=1 max=30
+#pragma HLS loop_tripcount min=1 max=50
 		x_split_array_PL[i] = x_min + i * x_unit;
 	}
 loop_split_space_y:
 	for (int i = 1; i <= y_split_size; i++)
 	{
 #pragma HLS pipeline
-#pragma HLS loop_tripcount min=1 max=30
+#pragma HLS loop_tripcount min=1 max=50
 		x_split_array_PL[i] = y_min + i * y_unit;
 	}
 loop_split_space_z:
 	for (int i = 1; i <= z_split_size; i++)
 	{
 #pragma HLS pipeline
-#pragma HLS loop_tripcount min=1 max=30
+#pragma HLS loop_tripcount min=1 max=50
 		x_split_array_PL[i] = z_min + i * z_unit;
 	}
 
@@ -165,6 +165,8 @@ void ExDataClassify_hw()
 														//reset the array
 	for (int i = 0; i < total_calculated_cell_size_PL; i++)
 	{
+#pragma HLS pipeline
+#pragma HLS loop_tripcount min=1 max=25000
 		count_cell_size[i] = 0;
 		cell_occupied_number[i] = 0;
 	}
@@ -174,6 +176,11 @@ void ExDataClassify_hw()
 
 	for (int i = 0; i < data_set_size_PL; i++)
 	{
+#pragma HLS pipeline
+#pragma HLS loop_tripcount min=1 max=100000
+#pragma HLS DEPENDENCE variable=count_cell_size intra WAR true
+#pragma HLS DEPENDENCE variable=count_cell_size inter false
+
 		int data_hash = ExCalculateHash_hw(data_set_PL[i]);
 
 		data_hash_PL[i] = data_hash;
@@ -183,11 +190,21 @@ void ExDataClassify_hw()
 	cell_first_index[0] = 0;
 	for (int i = 1; i < total_calculated_cell_size_PL; i++)
 	{
+#pragma HLS pipeline
+#pragma HLS loop_tripcount min=1 max=25000
+#pragma HLS DEPENDENCE variable=cell_first_index intra WAR true
+#pragma HLS DEPENDENCE variable=cell_first_index inter false
+
 		cell_first_index[i] = cell_first_index[i - 1] + count_cell_size[i - 1];
 	}
 
 	for (int i = 0; i < data_set_size_PL; i++)
 	{
+#pragma HLS pipeline
+#pragma HLS loop_tripcount min=1 max=100000
+#pragma HLS DEPENDENCE variable=cell_occupied_number intra WAR true
+#pragma HLS DEPENDENCE variable=cell_occupied_number inter false
+
 		int current_cell_index = data_hash_PL[i];
 		int insert_index = (cell_first_index[current_cell_index] + cell_occupied_number[current_cell_index]);
 		data_ordered_by_hash_PL[insert_index] = i;
@@ -289,8 +306,10 @@ void ExSearchKNNGBDS_hw()
 	if (sum_near_points < K_PL* k_search_points_times)
 	{
 		int search_distance = 1;
+loop_while_find_sufficient_points:
 		for (int while_count = 0; while_count < 6; while_count++)
 		{
+#pragma HLS loop_tripcount min=1 max=6
 		loop_Find_Near_Regions_ix:
 			for (int ix = -search_distance; ix <= search_distance; ix++)
 			{
@@ -348,12 +367,17 @@ void ExSearchKNNGBDS_hw()
 
 
 	////////////////////////////////find K_PL nearest neighbors in valid near sub-regions
-
+loop_knn_near_region:
 	for (int i = 0; i < valid_near_region_size; i++)
 	{
+#pragma HLS loop_tripcount min=1 max=15
 		int current_search_hash = valid_near_regions[i];
+loop_knn_each_cell:
 		for (int j = 0; j < count_cell_size[current_search_hash]; j++)
 		{
+#pragma HLS loop_tripcount min=1 max=20
+#pragma HLS pipeline II=1
+
 			int index = data_ordered_by_hash_PL[cell_first_index[current_search_hash] + j];
 			struct ThreeDimPoint test_p = ordered_data_set_PL[cell_first_index[current_search_hash] + j];
 			type_point distance = ExEucDist_hw(query_data_PL, ordered_data_set_PL[cell_first_index[current_search_hash] + j]);	//data_set_PL[index]
@@ -419,17 +443,23 @@ void ExBuildGBDS_hw(struct ThreeDimPoint data_set[k_data_set_size])
 	ExDataClassify_hw();
 }
 
+//#pragma SDS data mem_attribute("data_set":NON_CACHEABLE|PHYSICAL_CONTIGUOUS)
+#pragma SDS data access_pattern("data_set":SEQUENTIAL)
+#pragma SDS data copy("data_set"[0:data_set_size])
+//#pragma SDS data mem_attribute("nearest_index":NON_CACHEABLE|PHYSICAL_CONTIGUOUS, "nearest_distance":NON_CACHEABLE|PHYSICAL_CONTIGUOUS)
+//#pragma SDS data access_pattern("nearest_index":SEQUENTIAL, "nearest_distance":SEQUENTIAL)
+//#pragma SDS data copy(nearest_index[0:k_nearest_number_max], nearest_distance[0:k_nearest_number_max])		// tell the compiler the size of data_set;
+//#pragma SDS data copy("data_set"[0:k_data_set_size], "nearest_index"[0:k_nearest_number_max], "nearest_distance"[0:k_nearest_number_max])
+#pragma SDS data mem_attribute("data_set":PHYSICAL_CONTIGUOUS, "nearest_index":PHYSICAL_CONTIGUOUS, "nearest_distance":PHYSICAL_CONTIGUOUS)
 void ExGBDSIPCore_hw(bool select_build_GBDS, My_Points data_set[k_data_set_size], int data_set_size, unsigned int rand_seed, int K, My_Points query_data, int nearest_index[k_nearest_number_max], type_point nearest_distance[k_nearest_number_max], float split_precise)
 {
 	//#pragma HLS ARRAY_PARTITION variable=data_max_min_PL complete dim=0
 #pragma HLS ARRAY_PARTITION variable=x_split_array_PL complete dim=0
 #pragma HLS ARRAY_PARTITION variable=y_split_array_PL complete dim=0
 #pragma HLS ARRAY_PARTITION variable=z_split_array_PL complete dim=0
-	//#pragma HLS ARRAY_PARTITION variable=split_array_size_PL complete dim=0
-#pragma HLS ARRAY_PARTITION variable=data_set_PL dim=1 cyclic factor=10
 #pragma HLS data_pack variable=data_set struct_level
-#pragma HLS ARRAY_PARTITION variable=sub_sets_size_PL dim=1 cyclic factor=10
-#pragma HLS ARRAY_PARTITION variable=sub_sets_PL dim=1 cyclic factor=10
+//#pragma HLS ARRAY_PARTITION variable=sub_sets_size_PL dim=1 cyclic factor=10
+
 #pragma HLS ARRAY_PARTITION variable=nearest_index_PL complete dim=0
 #pragma HLS ARRAY_PARTITION variable=nearest_distance_PL complete dim=0
 #pragma HLS ARRAY_PARTITION variable=sort_kick_flag  complete dim=0
@@ -519,21 +549,21 @@ loop_split_space_precise_x:
 		//consider parallel
 #pragma HLS pipeline
 #pragma HLS loop_tripcount min=1 max=50
-		x_split_array_PL[i] = x_min + (i + 1) * x_split_unit;
+		x_split_array_PL[i] = x_min + i * x_split_unit;
 	}
 loop_split_space_precise_y:
 	for (int i = 0; i < y_split_size; i++)
 	{
 #pragma HLS pipeline
 #pragma HLS loop_tripcount min=1 max=50
-		x_split_array_PL[i] = y_min + (i + 1) * y_split_unit;
+		x_split_array_PL[i] = y_min + i * y_split_unit;
 	}
 loop_split_space_precise_z:
 	for (int i = 0; i < z_split_size; i++)
 	{
 #pragma HLS pipeline
 #pragma HLS loop_tripcount min=1 max=50
-		x_split_array_PL[i] = z_min + (i + 1) * z_split_unit;
+		x_split_array_PL[i] = z_min + i * z_split_unit;
 	}
 
 	//the split array range [min,max];(contain the min and max)
