@@ -23,7 +23,7 @@ static int data_hash_PL[k_data_set_size];			//each data's hash
 static int count_cell_size[k_cells_number_max];		//count the number of data in each grid
 static int data_ordered_by_hash_PL[k_data_set_size];	//reorder the data's index by hash
 static int cell_first_index[k_cells_number_max];		//the first index of each cell when merge them in ordered hash array.
-static struct ThreeDimPoint ordered_data_set_PL[k_data_set_size];	//new dataset ordered by hash. 
+//static struct ThreeDimPoint ordered_data_set_PL[k_data_set_size];	//new dataset ordered by hash.
 
 
 static struct ThreeDimPoint query_data_PL;
@@ -162,7 +162,7 @@ void ExDataClassify_hw()
 {
 	int cell_occupied_number[k_cells_number_max];		//the first index of each grid when merge them in ordered hash array.
 
-														//reset the array
+loop_reset_arrays:														//reset the array
 	for (int i = 0; i < total_calculated_cell_size_PL; i++)
 	{
 #pragma HLS pipeline
@@ -173,13 +173,13 @@ void ExDataClassify_hw()
 
 	//	static int data_hash_PL[k_data_set_size];
 	//	static int data_ordered_by_hash_PL[k_data_set_size];
-
+loop_calculate_data_set_hash:
 	for (int i = 0; i < data_set_size_PL; i++)
 	{
 #pragma HLS pipeline
 #pragma HLS loop_tripcount min=1 max=100000
 #pragma HLS DEPENDENCE variable=count_cell_size intra WAR true
-#pragma HLS DEPENDENCE variable=count_cell_size inter false
+//#pragma HLS DEPENDENCE variable=count_cell_size inter false
 
 		int data_hash = ExCalculateHash_hw(data_set_PL[i]);
 
@@ -187,28 +187,30 @@ void ExDataClassify_hw()
 		count_cell_size[data_hash] = count_cell_size[data_hash] + 1;
 	}
 
+loop_calculate_first_index:
 	cell_first_index[0] = 0;
 	for (int i = 1; i < total_calculated_cell_size_PL; i++)
 	{
 #pragma HLS pipeline
 #pragma HLS loop_tripcount min=1 max=25000
 #pragma HLS DEPENDENCE variable=cell_first_index intra WAR true
-#pragma HLS DEPENDENCE variable=cell_first_index inter false
+#pragma HLS DEPENDENCE variable=cell_first_index inter true		//there is a inter dependency
 
 		cell_first_index[i] = cell_first_index[i - 1] + count_cell_size[i - 1];
 	}
 
+loop_reorder_data_set:
 	for (int i = 0; i < data_set_size_PL; i++)
 	{
 #pragma HLS pipeline
 #pragma HLS loop_tripcount min=1 max=100000
 #pragma HLS DEPENDENCE variable=cell_occupied_number intra WAR true
-#pragma HLS DEPENDENCE variable=cell_occupied_number inter false
+#pragma HLS DEPENDENCE variable=cell_occupied_number inter true
 
 		int current_cell_index = data_hash_PL[i];
 		int insert_index = (cell_first_index[current_cell_index] + cell_occupied_number[current_cell_index]);
 		data_ordered_by_hash_PL[insert_index] = i;
-		ordered_data_set_PL[insert_index] = data_set_PL[i];
+		//ordered_data_set_PL[insert_index] = data_set_PL[i];
 		cell_occupied_number[current_cell_index] = cell_occupied_number[current_cell_index] + 1;
 	}
 
@@ -378,9 +380,10 @@ loop_knn_each_cell:
 #pragma HLS loop_tripcount min=1 max=20
 #pragma HLS pipeline II=1
 
-			int index = data_ordered_by_hash_PL[cell_first_index[current_search_hash] + j];
-			struct ThreeDimPoint test_p = ordered_data_set_PL[cell_first_index[current_search_hash] + j];
-			type_point distance = ExEucDist_hw(query_data_PL, ordered_data_set_PL[cell_first_index[current_search_hash] + j]);	//data_set_PL[index]
+			int original_dataset_index = data_ordered_by_hash_PL[cell_first_index[current_search_hash] + j];
+			//struct ThreeDimPoint point_in_dataset = ordered_data_set_PL[cell_first_index[current_search_hash] + j];
+			struct ThreeDimPoint point_in_dataset = data_set_PL[original_dataset_index];
+			type_point distance = ExEucDist_hw(query_data_PL, point_in_dataset);	//data_set_PL[index]
 
 		loop_knn_result_flag:
 			for (int k = 0; k < k_nearest_number_max; k++)
@@ -407,18 +410,16 @@ loop_knn_each_cell:
 					nearest_distance_PL[k] = nearest_distance_PL[k - 1];
 					nearest_index_PL[k] = nearest_index_PL[k - 1];
 				}
-				if (!sort_kick_flag[k - 1] && sort_kick_flag[k])	//**0111
+				else if (!sort_kick_flag[k - 1] && sort_kick_flag[k])	//**0111
 				{
-					nearest_distance_PL[k] = nearest_distance_PL[k - 1];
-					nearest_index_PL[k] = nearest_index_PL[k - 1];
-					nearest_distance_PL[k - 1] = distance;
-					nearest_index_PL[k - 1] = index;
+					nearest_distance_PL[k] = distance;
+					nearest_index_PL[k] = original_dataset_index;
 				}
 			}
 			if (sort_kick_flag[0])
 			{
 				nearest_distance_PL[0] = distance;
-				nearest_index_PL[0] = index;
+				nearest_index_PL[0] = original_dataset_index;
 			}
 		}
 	}
@@ -459,6 +460,13 @@ void ExGBDSIPCore_hw(bool select_build_GBDS, My_Points data_set[k_data_set_size]
 #pragma HLS ARRAY_PARTITION variable=z_split_array_PL complete dim=0
 #pragma HLS data_pack variable=data_set struct_level
 //#pragma HLS ARRAY_PARTITION variable=sub_sets_size_PL dim=1 cyclic factor=10
+
+#pragma HLS ARRAY_PARTITION variable=data_hash_PL dim=1 cyclic factor=5
+#pragma HLS ARRAY_PARTITION variable=count_cell_size dim=1 cyclic factor=5
+#pragma HLS ARRAY_PARTITION variable=data_ordered_by_hash_PL dim=1 cyclic factor=5
+#pragma HLS ARRAY_PARTITION variable=cell_first_index dim=1 cyclic factor=5
+//#pragma HLS ARRAY_PARTITION variable=ordered_data_set_PL dim=1 cyclic factor=5
+#pragma HLS ARRAY_PARTITION variable=data_set_PL dim=1 cyclic factor=5
 
 #pragma HLS ARRAY_PARTITION variable=nearest_index_PL complete dim=0
 #pragma HLS ARRAY_PARTITION variable=nearest_distance_PL complete dim=0
