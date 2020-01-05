@@ -23,7 +23,7 @@ static int data_hash_PL[k_data_set_size];			//each data's hash
 static int count_cell_size[k_cells_number_max];		//count the number of data in each grid
 static int data_ordered_by_hash_PL[k_data_set_size];	//reorder the data's index by hash
 static int cell_first_index[k_cells_number_max];		//the first index of each cell when merge them in ordered hash array.
-//static struct ThreeDimPoint ordered_data_set_PL[k_data_set_size];	//new dataset ordered by hash.
+														//static struct ThreeDimPoint ordered_data_set_PL[k_data_set_size];	//new dataset ordered by hash.
 
 
 static struct ThreeDimPoint query_data_PL;
@@ -130,21 +130,21 @@ loop_split_space_x:
 	{
 #pragma HLS pipeline
 #pragma HLS loop_tripcount min=1 max=50
-		x_split_array_PL[i] = x_min + i * x_unit;
+		x_split_array_PL[i-1] = x_min + i * x_unit;
 	}
 loop_split_space_y:
 	for (int i = 1; i <= y_split_size; i++)
 	{
 #pragma HLS pipeline
 #pragma HLS loop_tripcount min=1 max=50
-		x_split_array_PL[i] = y_min + i * y_unit;
+		x_split_array_PL[i-1] = y_min + i * y_unit;
 	}
 loop_split_space_z:
 	for (int i = 1; i <= z_split_size; i++)
 	{
 #pragma HLS pipeline
 #pragma HLS loop_tripcount min=1 max=50
-		x_split_array_PL[i] = z_min + i * z_unit;
+		x_split_array_PL[i-1] = z_min + i * z_unit;
 	}
 
 	//the split array range [min,max];(contain the min and max)
@@ -179,7 +179,8 @@ loop_calculate_data_set_hash:
 #pragma HLS pipeline
 #pragma HLS loop_tripcount min=1 max=100000
 #pragma HLS DEPENDENCE variable=count_cell_size intra WAR true
-//#pragma HLS DEPENDENCE variable=count_cell_size inter false
+		//#pragma HLS DEPENDENCE variable=count_cell_size inter false
+		//If remove the dependency of inter loop, the result will be fault.
 
 		int data_hash = ExCalculateHash_hw(data_set_PL[i]);
 
@@ -308,62 +309,62 @@ void ExSearchKNNGBDS_hw()
 	if (sum_near_points < K_PL* k_search_points_times)
 	{
 		int search_distance = 1;
-loop_while_find_sufficient_points:
+	loop_while_find_sufficient_points:
 		for (int while_count = 0; while_count < 6; while_count++)
 		{
 #pragma HLS loop_tripcount min=1 max=6
-		loop_Find_Near_Regions_ix:
-			for (int ix = -search_distance; ix <= search_distance; ix++)
-			{
+			loop_Find_Near_Regions_ix:
+									 for (int ix = -search_distance; ix <= search_distance; ix++)
+									 {
 #pragma HLS loop_tripcount min=1 max=40
-				//#pragma HLS pipeline II=1
+										 //#pragma HLS pipeline II=1
 
-				int iy_higher_bound = search_distance - abs(ix);
-				int iy_lower_bound = -iy_higher_bound;
+										 int iy_higher_bound = search_distance - abs(ix);
+										 int iy_lower_bound = -iy_higher_bound;
 
-			loop_Find_Near_Regions_iy:
-				for (int iy = iy_lower_bound; iy <= iy_higher_bound; iy++)
-				{
+									 loop_Find_Near_Regions_iy:
+										 for (int iy = iy_lower_bound; iy <= iy_higher_bound; iy++)
+										 {
 #pragma HLS pipeline II=1
 #pragma HLS loop_tripcount min=1 max=40
-					int iz_abs = search_distance - abs(ix) - abs(iy);
-					if (iz_abs >= 0)
-					{
-						char iz = iz_abs;
-						int cal_index = query_index + ix * split_array_size_PL.y_array_size * split_array_size_PL.z_array_size + iy * split_array_size_PL.z_array_size + iz;
-						//make sure the index is in the array's range
-						if ((cal_index >= 0) && (cal_index < (total_calculated_cell_size_PL)))
-						{
-							if (count_cell_size[cal_index] > 0)
-							{
-								sum_near_points += count_cell_size[cal_index];
-								valid_near_regions[valid_near_region_size] = cal_index;
-								valid_near_region_size++;
-							}
+											 int iz_abs = search_distance - abs(ix) - abs(iy);
+											 if (iz_abs >= 0)
+											 {
+												 char iz = iz_abs;
+												 int cal_index = query_index + ix * split_array_size_PL.y_array_size * split_array_size_PL.z_array_size + iy * split_array_size_PL.z_array_size + iz;
+												 //make sure the index is in the array's range
+												 if ((cal_index >= 0) && (cal_index < (total_calculated_cell_size_PL)))
+												 {
+													 if (count_cell_size[cal_index] > 0)
+													 {
+														 sum_near_points += count_cell_size[cal_index];
+														 valid_near_regions[valid_near_region_size] = cal_index;
+														 valid_near_region_size++;
+													 }
 
-						}
+												 }
 
-						char iz_minus = -iz_abs;
-						int cal_index_minus = query_index + ix * split_array_size_PL.y_array_size * split_array_size_PL.z_array_size + iy * split_array_size_PL.z_array_size + iz_minus;
-						//make sure the index is in the array's range
-						if ((cal_index_minus >= 0) && (cal_index_minus < (total_calculated_cell_size_PL)))
-						{
-							if (count_cell_size[cal_index_minus] > 0)
-							{
-								sum_near_points += count_cell_size[cal_index_minus];
-								valid_near_regions[valid_near_region_size] = cal_index_minus;
-								valid_near_region_size++;
-							}
+												 char iz_minus = -iz_abs;
+												 int cal_index_minus = query_index + ix * split_array_size_PL.y_array_size * split_array_size_PL.z_array_size + iy * split_array_size_PL.z_array_size + iz_minus;
+												 //make sure the index is in the array's range
+												 if ((cal_index_minus >= 0) && (cal_index_minus < (total_calculated_cell_size_PL)))
+												 {
+													 if (count_cell_size[cal_index_minus] > 0)
+													 {
+														 sum_near_points += count_cell_size[cal_index_minus];
+														 valid_near_regions[valid_near_region_size] = cal_index_minus;
+														 valid_near_region_size++;
+													 }
 
-						}
-					}
+												 }
+											 }
 
-				}
-			}
-			if (sum_near_points >= K_PL * k_search_points_times)
-				break;
-			else
-				search_distance++;
+										 }
+									 }
+									 if (sum_near_points >= K_PL * k_search_points_times)
+										 break;
+									 else
+										 search_distance++;
 		}
 	}
 
@@ -374,7 +375,7 @@ loop_knn_near_region:
 	{
 #pragma HLS loop_tripcount min=1 max=15
 		int current_search_hash = valid_near_regions[i];
-loop_knn_each_cell:
+	loop_knn_each_cell:
 		for (int j = 0; j < count_cell_size[current_search_hash]; j++)
 		{
 #pragma HLS loop_tripcount min=1 max=20
@@ -459,13 +460,13 @@ void ExGBDSIPCore_hw(bool select_build_GBDS, My_Points data_set[k_data_set_size]
 #pragma HLS ARRAY_PARTITION variable=y_split_array_PL complete dim=0
 #pragma HLS ARRAY_PARTITION variable=z_split_array_PL complete dim=0
 #pragma HLS data_pack variable=data_set struct_level
-//#pragma HLS ARRAY_PARTITION variable=sub_sets_size_PL dim=1 cyclic factor=10
+	//#pragma HLS ARRAY_PARTITION variable=sub_sets_size_PL dim=1 cyclic factor=10
 
 #pragma HLS ARRAY_PARTITION variable=data_hash_PL dim=1 cyclic factor=5
 #pragma HLS ARRAY_PARTITION variable=count_cell_size dim=1 cyclic factor=5
 #pragma HLS ARRAY_PARTITION variable=data_ordered_by_hash_PL dim=1 cyclic factor=5
 #pragma HLS ARRAY_PARTITION variable=cell_first_index dim=1 cyclic factor=5
-//#pragma HLS ARRAY_PARTITION variable=ordered_data_set_PL dim=1 cyclic factor=5
+	//#pragma HLS ARRAY_PARTITION variable=ordered_data_set_PL dim=1 cyclic factor=5
 #pragma HLS ARRAY_PARTITION variable=data_set_PL dim=1 cyclic factor=5
 
 #pragma HLS ARRAY_PARTITION variable=nearest_index_PL complete dim=0

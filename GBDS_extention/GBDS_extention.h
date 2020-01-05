@@ -47,10 +47,10 @@ typedef struct SplitArraySize {
 
 
 
-#define k_data_set_size 100000		//max size of dataset, Actual data size is k_data_set_size*3
-#define k_axis_cell_max  50	//the biggest size for splitting the axis  50*50*50 = 125000... need to be restrained
+#define k_data_set_size 1000000		//max size of dataset, Actual data size is k_data_set_size*3
+#define k_axis_cell_max  60	//the biggest size for splitting the axis  50*50*50 = 125000... need to be restrained
 #define  k_ideal_cell_size 4
-#define k_cells_number_max 25000
+#define k_cells_number_max 250000
 #define k_search_near_regions_max 100
 #define k_search_points_times 3
 #define k_nearest_number_max 10
